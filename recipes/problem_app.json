@@ -1,0 +1,12 @@
+{
+  "id": "problem_app",
+  "content": "fact",
+  "weight": 1,
+  "source": "seed",
+  "beats": [
+    {"block": "hook_text", "dur": 2.4, "bg": "broll", "text": "hook"},
+    {"block": "text_beat", "dur": 2.4, "bg": "broll", "text": "line:problem", "transition": "fade"},
+    {"block": "fact", "dur": 3.0, "bg": "dark", "text": "content", "transition": "punch"},
+    {"block": "end_card", "dur": 2.0}
+  ]
+}

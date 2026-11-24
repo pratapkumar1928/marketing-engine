@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["id", "content", "weight", "beats"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "content": {"enum": ["roast", "fact", "clip"]},
+    "weight": {"type": "number", "exclusiveMinimum": 0},
+    "source": {"type": "string"},
+    "beats": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["block", "dur"],
+        "additionalProperties": false,
+        "properties": {
+          "block": {"enum": ["hook_text", "text_beat", "broll", "app_clip", "app_overlay", "fact", "end_card"]},
+          "dur": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"const": "clip"}]},
+          "bg": {"enum": ["broll", "clip", "dark"]},
+          "text": {"type": "string", "pattern": "^(hook|content|line:[a-z_]+)$"},
+          "transition": {"enum": ["cut", "fade", "slide_up", "punch"]}
+        }
+      }
+    }
+  }
+}

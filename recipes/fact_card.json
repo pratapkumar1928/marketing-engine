@@ -1,0 +1,11 @@
+{
+  "id": "fact_card",
+  "content": "fact",
+  "weight": 1,
+  "source": "seed",
+  "beats": [
+    {"block": "hook_text", "dur": 2.2, "bg": "broll", "text": "hook"},
+    {"block": "fact", "dur": 3.6, "bg": "broll", "text": "content", "transition": "slide_up"},
+    {"block": "end_card", "dur": 2.0}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "clip_remix",
+  "content": "clip",
+  "weight": 1,
+  "source": "seed",
+  "beats": [
+    {"block": "app_clip", "dur": "clip", "bg": "clip", "text": "hook"},
+    {"block": "end_card", "dur": 1.8}
+  ]
+}

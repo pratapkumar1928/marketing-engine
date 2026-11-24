@@ -1,0 +1,11 @@
+{
+  "id": "roast_card",
+  "content": "roast",
+  "weight": 2,
+  "source": "seed",
+  "beats": [
+    {"block": "hook_text", "dur": 2.6, "bg": "broll", "text": "hook"},
+    {"block": "app_overlay", "dur": 4.2, "text": "content", "transition": "punch"},
+    {"block": "end_card", "dur": 1.8}
+  ]
+}
