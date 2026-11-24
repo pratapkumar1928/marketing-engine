@@ -61,8 +61,11 @@ engine/
   publishers/instagram.py  publish
   publishers/facebook.py   publish
   report.py       build_report, send
-  main.py         CLI: run | report
+  main.py         CLI: run | report | check-app
+  checkapp.py     check_app
 renderer/         template assets: base.html.tpl, fonts/, sfx/
+recipes/          shared recipes every app inherits (fact_card, problem_app)
+.claude/skills/add-app/SKILL.md   onboarding skill for a new app
 apps/scrollsmack/ app.yaml facts.yaml copy/{style.md,hashtags.yaml,roasts.yaml,keywords.yaml}
                   recipes/*.json blocks/app_overlay.html brand/{icon.png} footage/{clips.yaml,*.mp4}
 tools/sync_roasts.py
@@ -171,19 +174,20 @@ def test_dst_day_has_correct_local_times(): day 2027-03-14 → first slot is 08:
 
 ### Task 4: Recipe schema, gates and seed recipes
 
-**Files:** Create `engine/recipe.schema.json`, `engine/recipes.py`, `apps/scrollsmack/recipes/{roast_card,clip_remix,fact_card}.json`; Test `tests/test_recipes.py`
+**Files:** Create `engine/recipe.schema.json`, `engine/recipes.py`, `recipes/{fact_card,problem_app}.json` (shared, every app inherits), `apps/scrollsmack/recipes/{roast_card,clip_remix}.json` (app-only); Test `tests/test_recipes.py`
 
 **Interfaces:**
 - Recipe JSON: `{"id": str, "content": "roast"|"fact"|"clip", "weight": number>0, "beats": [Beat...]}`. Beat: `{"block": "hook_text"|"text_beat"|"broll"|"app_clip"|"app_overlay"|"fact"|"end_card", "dur": number, "bg": "broll"|"clip"|"dark" (optional), "text": "hook"|"content"|"line:<key>" (optional), "transition": "cut"|"fade"|"slide_up"|"punch" (optional, default cut)}`. `app_clip` with `dur: "clip"` means use the clip's own length, capped at 8 s.
 - Produces:
-  - `load_recipes(app_dir: Path) -> list[dict]` (only those passing validation; the invalid ones are logged by id).
+  - `load_recipes(root: Path, app: dict) -> list[dict]`: shared `root/recipes/*.json` merged with `apps/<app>/recipes/*.json`; an app recipe with the same `id` overrides the shared one. Keeps only recipes that pass validation (the invalid ones are logged by id) **and** whose content pool is non-empty for this app. A `clip` recipe is dropped for an app with no `footage/clips.yaml`; a `roast` recipe is dropped for an app with no `copy/roasts.yaml`. So a brand-new app with only `facts.yaml` gets exactly the shared fact-based recipes.
   - `validate_recipe(r: dict, clip_max: float = 8.0) -> list[str]` (empty = valid). Gates from the spec: schema valid; total 7–30 s (count `"clip"` durations as `clip_max`); contains at least one of `app_clip | app_overlay | fact`; the last beat is `end_card`.
 - Seed recipes (exact beats):
   - `roast_card`: hook_text 2.6 bg broll text hook → app_overlay 4.2 text content (punch) → end_card 1.8
   - `clip_remix`: app_clip "clip" text hook → end_card 1.8
-  - `fact_card`: hook_text 2.2 bg broll → fact 3.6 bg broll text content (slide_up) → end_card 2.0
+  - `fact_card` (shared): hook_text 2.2 bg broll → fact 3.6 bg broll text content (slide_up) → end_card 2.0
+  - `problem_app` (shared, content `fact`): hook_text 2.4 bg broll → text_beat 2.4 bg broll text `line:problem` → fact 3.0 bg dark text content (punch) → end_card 2.0
 
-- [ ] **Step 1: Tests:** `test_seeds_valid`, `test_too_short_rejected` (total 5 s), `test_no_app_block_rejected`, `test_must_end_with_end_card`, `test_unknown_block_rejected`.
+- [ ] **Step 1: Tests:** `test_seeds_valid`, `test_too_short_rejected` (total 5 s), `test_no_app_block_rejected`, `test_must_end_with_end_card`, `test_unknown_block_rejected`, `test_app_recipe_overrides_shared_by_id`, `test_facts_only_app_gets_only_fact_recipes` (fixture app with only `facts.yaml` → ids == {"fact_card","problem_app"}).
 - [ ] **Step 2: Run → FAIL. Step 3: Implement with `jsonschema.Draft202012Validator`. Step 4: Run → PASS.**
 - [ ] **Step 5: Commit** `feat: recipe schema, gates, seed recipes`.
 
@@ -369,4 +373,29 @@ def test_pause_file_stops_everything(): ...
 - [ ] **Step 1: Validate workflow syntax:** `npx --yes @action-validator/cli .github/workflows/run.yml` (or `actionlint` if installed). Expected: no errors. Check `grep -n "pull_request_target" .github -r` → no matches. Check `grep -nE "uses: .+@v[0-9]" .github -r` → no matches (all SHA-pinned).
 - [ ] **Step 2: Full test suite** `pytest -q` → all pass.
 - [ ] **Step 3: Commit** `docs: workflows, readme, setup checklist`.
-- [ ] **Step 4: Live verification (after Pratap finishes setup steps 1–5):** dispatch `run.yml` with dry_run=1 at a due time. Expected: green run, ledger commit by `engine-bot`, MP4 artifact. Then a single `dry_run=0` dispatch with a test `post_times` entry. Expected: one Reel live on IG and FB, and `published` lines with urls.
+- [ ] **Step 4 (moved after Task 14): Live verification (after Pratap finishes setup steps 1–5):** dispatch `run.yml` with dry_run=1 at a due time. Expected: green run, ledger commit by `engine-bot`, MP4 artifact. Then a single `dry_run=0` dispatch with a test `post_times` entry. Expected: one Reel live on IG and FB, and `published` lines with urls.
+
+---
+
+### Task 14: Onboarding a new app (`check-app` + `/add-app` skill)
+
+**Files:** Modify `engine/main.py` (add the `check-app` subcommand); Create `engine/checkapp.py`, `.claude/skills/add-app/SKILL.md`, `docs/add-an-app.md`; Test `tests/test_checkapp.py`, `tests/fixtures/apps/newapp/` (a minimal app: `app.yaml`, `facts.yaml`, `copy/{style.md,hashtags.yaml,keywords.yaml}`)
+
+**Interfaces:**
+- Consumes: `load_app`, `load_recipes`, `validate_recipe`, `write_copy`, `render`, Deps (Tasks 1–11).
+- Produces:
+  - `check_app(root: Path, name: str) -> list[str]` (empty = ready). Checks: `app.yaml` has the required keys (`name, store_url, timezone, post_times, platforms, brand.colors, brand.icon`, plus a `meta` secret-name block if any Meta platform is enabled); the icon file exists; `facts.yaml` has ≥ 5 facts; `hashtags.yaml` has ≥ 5 tags; `keywords.yaml` has ≥ 3; `style.md` is non-empty; at least one recipe loads for the app; every clip in `clips.yaml` exists and is < 100 MB; no platform is enabled while `enabled_on` is missing.
+  - CLI `python -m engine.main check-app <name> [--preview N]`: prints the problems (exit 1 if any). With `--preview N` (default 0) it plans, writes and renders N videos with **DRY_RUN forced on** into `out/preview/<name>/` and writes nothing to the ledger.
+- `.claude/skills/add-app/SKILL.md` (a Claude Code skill; Pratap types `/add-app <repo path or store URL>` inside `marketing-engine`). Steps it instructs:
+  1. Read the source: the app repo's `CLAUDE.md`/README, store listing copy, `strings.xml` or equivalent, the website, screenshots. For a URL, fetch the store page.
+  2. Draft `apps/<slug>/` from `tests/fixtures/apps/newapp/` as the template: facts only from what the sources state (cite the source file per fact in a YAML comment), style, hashtags, niche keywords, brand colors/fonts/icon, timezone and post_times copied from ScrollSmack, every platform `enabled: false`.
+  3. Copy any existing promo clips/screen recordings into `footage/` with `clips.yaml`.
+  4. Run `python -m engine.main check-app <slug> --preview 3` and fix problems until it is clean.
+  5. Show Pratap `facts.yaml` and the 3 preview MP4s, and ask him to approve the facts. **This is the one human review per app**, because facts bound every AI claim.
+  6. After approval: list the account secrets to create (names from `app.yaml: meta`). Set `enabled: true` and `enabled_on: <tomorrow>`, then commit.
+- `docs/add-an-app.md`: the same flow for a human, plus how to share an existing account (point `meta` at another app's secret names).
+
+- [ ] **Step 1: Tests:** `test_fixture_newapp_passes`, `test_missing_facts_reported`, `test_enabled_without_enabled_on_reported`, `test_missing_icon_reported`, `test_preview_never_touches_ledger` (fake deps; the ledger file is unchanged after `--preview 2`).
+- [ ] **Step 2: Run → FAIL. Step 3: Implement `checkapp.py`, the CLI, the skill and the doc. Step 4: Run → PASS.**
+- [ ] **Step 5: Verify the skill end to end on ScrollSmack itself:** `python -m engine.main check-app scrollsmack --preview 2` → no problems, 2 MP4s in `out/preview/scrollsmack/`.
+- [ ] **Step 6: Commit** `feat: check-app command and /add-app onboarding skill`.
