@@ -229,6 +229,28 @@ HyperFrames SFX only. *(Builder-check call.)*
 The engine's own public repo, a privacy-policy page and a demo recording are what TikTok and
 Google ask for. The build prepares both applications; Pratap submits them (they need his login).
 
+### Security (public repo)
+
+Secrets (Gemini key, Pexels key, Meta / YouTube / TikTok tokens, Telegram token) live only in
+GitHub Actions secrets. The repo holds code, recipes, footage, research and the ledger, and
+nothing else. Rules:
+
+- `.gitignore` covers `.env*`, token caches and `out/`. GitHub **secret scanning push
+  protection** is enabled on the repo.
+- **No secret in any log, error or exception text.** Clients re-raise without the URL or params
+  (the same rule as `social-engine`). Never log request URLs that carry a token. GitHub masks exact
+  secret values but not transformed ones (encoded, embedded in a URL).
+- Workflows trigger only on `schedule` and `workflow_dispatch`. **Never `pull_request_target`.**
+  Fork PRs get no secrets.
+- Every third-party Action is pinned to a full commit SHA.
+- `permissions:` is set per workflow to the minimum: `contents: write` only for the job that
+  commits the ledger and research, read-only everywhere else.
+- Artifacts contain rendered MP4s and plan JSON only.
+- Platform tokens carry the minimal posting / reading scopes.
+- **Rotated tokens** (TikTok refresh tokens, for example) can't be written back to GitHub secrets
+  from inside a run without a broad PAT. *(Builder decides; preferred: tokens whose refresh token
+  does not rotate, or a fine-grained PAT limited to this repo's secrets.)*
+
 ### Rollout
 
 1. `DRY_RUN=1` default: plan + render + log, no posting. Run for 2 days, inspect artifacts.
