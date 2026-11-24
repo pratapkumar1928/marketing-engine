@@ -1,6 +1,7 @@
 """AI-written hooks/captions, gated by rule checks and an LLM claim checker. Two attempts, then CopyRejected."""
 import difflib
 import re
+import unicodedata
 from pathlib import Path
 
 import yaml
@@ -68,6 +69,18 @@ def _all_text(c: Copy) -> str:
     return "\n".join([c.hook, *[v for k, v in c.texts.items() if k != "hook"], c.caption])
 
 
+_ZERO_WIDTH = dict.fromkeys(map(ord, "­​‌‍‎‏⁠﻿"))
+# Latin look-alikes that NFKC leaves alone (Cyrillic / Greek).
+_CONFUSABLE = str.maketrans("аеорсухіјѕԁоαεορντκ", "aeopcyxijsdoaeopvtk")
+_FORMATTING = re.compile(r"(^|\n)\s*#{1,6}\s|[<>]|```")
+
+
+def normalize(text: str) -> str:
+    """Lowercase, fold look-alikes and invisible chars, collapse every non-word run to one space."""
+    t = unicodedata.normalize("NFKC", text).translate(_ZERO_WIDTH).lower().translate(_CONFUSABLE)
+    return " " + re.sub(r"[\W_]+", " ", t).strip() + " "
+
+
 def validate_copy(c: Copy, app: dict, recent_captions: list[str]) -> list[str]:
     reasons = []
     if len(c.hook) > HOOK_MAX:
@@ -84,10 +97,14 @@ def validate_copy(c: Copy, app: dict, recent_captions: list[str]) -> list[str]:
     bad = [t for t in tags if t not in allowed]
     if bad:
         reasons.append(f"hashtag not in allowed list: {', '.join(bad)}")
-    text = _all_text(c).lower()
-    for word in GLOBAL_BANNED + [w.lower() for w in app.get("banned", [])]:
-        if re.search(rf"\b{re.escape(word)}\b", text):
-            reasons.append(f"banned phrase: {word}")
+    raw = _all_text(c)
+    if _FORMATTING.search(raw):
+        reasons.append("formatting not allowed (markdown headings, < >, code fences)")
+    text = normalize(raw)
+    for word in GLOBAL_BANNED + [str(w) for w in app.get("banned", [])]:
+        phrase = normalize(word).strip()
+        if phrase and f" {phrase} " in text:
+            reasons.append(f"banned phrase: {word.lower()}")
     for old in recent_captions:
         if difflib.SequenceMatcher(None, c.caption.lower(), str(old).lower()).ratio() >= DUP_RATIO:
             reasons.append("caption is a near duplicate of a recent post")
@@ -95,11 +112,26 @@ def validate_copy(c: Copy, app: dict, recent_captions: list[str]) -> list[str]:
     return reasons
 
 
+def _fence(text: str) -> str:
+    """Copy is untrusted data for the checker: one line, no tags or headings that could pose as instructions."""
+    t = text.replace("<", "‹").replace(">", "›").replace("#", "＃")
+    return "<copy>" + " / ".join(x.strip() for x in t.splitlines() if x.strip()) + "</copy>"
+
+
 def check_claims(c: Copy, facts: list[str], llm) -> list[str]:
+    """Unsupported claims. Any malformed checker reply raises (fail closed: the attempt counts as failed)."""
     prompt = (PROMPTS / "claim_checker.md").read_text(encoding="utf-8").format_map(
-        {"facts": "\n".join(f"- {f}" for f in facts), "copy": _all_text(c)})
-    out = llm(prompt, CLAIMS_SCHEMA)
-    return [cl["text"] for cl in out.get("claims", []) if not cl.get("supported")]
+        {"facts": "\n".join(f"- {f}" for f in facts), "copy": _fence(_all_text(c))})
+    claims = llm(prompt, CLAIMS_SCHEMA)["claims"]
+    if not isinstance(claims, list):
+        raise ValueError("claims is not a list")
+    out = []
+    for cl in claims:
+        if not isinstance(cl, dict) or not isinstance(cl.get("supported"), bool):
+            raise ValueError("malformed claim entry")
+        if cl["supported"] is not True:
+            out.append(str(cl.get("text", "")))
+    return out
 
 
 def _parse(raw: dict, keys: list[str]) -> tuple[Copy, list[str]]:
