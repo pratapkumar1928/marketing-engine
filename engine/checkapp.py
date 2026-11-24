@@ -11,7 +11,7 @@ from engine.types import CopyRejected, Slot
 
 REQUIRED = ["name", "store_url", "timezone", "post_times", "platforms"]
 SECRET_BLOCK = {"instagram": ("meta", "token_secret"), "facebook": ("meta", "token_secret"),
-                "youtube": ("youtube", "refresh_token_secret")}
+                "youtube": ("youtube", "refresh_token_secret"), "tiktok": ("tiktok", "token_key_secret")}
 MAX_CLIP = 100 * 1024 * 1024
 
 

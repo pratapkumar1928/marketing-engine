@@ -6,6 +6,7 @@ timezone: America/New_York
 post_times: ["08:00", "10:00", "12:00", "13:30", "15:00", "17:00", "18:30", "19:30", "20:30", "22:00"]
 platforms:
   youtube: {enabled: true, enabled_on: 2026-12-05, target: 5}
+  tiktok: {enabled: true, enabled_on: 2026-12-05, target: 5}  # inbox drafts: TikTok allows 5 pending per 24 h
   # Meta disabled the ScrollSmack Instagram account on 2026-11-21; don't recreate it (Meta terms).
   instagram: {enabled: false, enabled_on: 2026-12-05, target: 5}
   facebook: {enabled: false, enabled_on: 2026-12-05, target: 5}
@@ -18,6 +19,11 @@ youtube:  # one Google OAuth client can serve every app; the refresh token is pe
   client_id_secret: YOUTUBE_CLIENT_ID
   client_secret_secret: YOUTUBE_CLIENT_SECRET
   refresh_token_secret: SCROLLSMACK_YOUTUBE_REFRESH_TOKEN
+tiktok:  # inbox drafts; the rotating token lives encrypted in state/scrollsmack/tiktok_token.enc
+  client_key_secret: TIKTOK_CLIENT_KEY
+  client_secret_secret: TIKTOK_CLIENT_SECRET
+  token_key_secret: TIKTOK_TOKEN_KEY
+  redirect_uri: https://scrollsmack.app/
 meta:
   ig_user_id_secret: SCROLLSMACK_IG_USER_ID
   page_id_secret: SCROLLSMACK_FB_PAGE_ID

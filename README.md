@@ -4,7 +4,7 @@ A zero-touch, $0 short-video marketing engine for indie apps. Every 30 minutes a
 checks each app's posting schedule. For any slot that's due, it picks a format ("recipe") and an item
 of content, has an LLM write the hook and caption, checks every claim against the app's facts,
 renders a 9:16 video with [HyperFrames](https://github.com/heygen-com/hyperframes), and posts it to
-YouTube Shorts (Instagram/Facebook Reels publishers exist but are off). A Telegram message sums up each day.
+YouTube Shorts and, as one-tap inbox drafts, TikTok (Instagram/Facebook Reels publishers exist but are off). A Telegram message sums up each day.
 
 Design: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md` · Setup: `docs/setup.md` ·
 New app: `docs/add-an-app.md` (or `/add-app` in Claude Code).
@@ -28,7 +28,7 @@ state/<app>/ledger.jsonl   append-only post log (committed by the bot)
 | `broll` | `engine/broll/<name>.py: fetch(query, out_dir, *, rng) -> Path \| None` (never raises) | `pexels` |
 | `music` | `engine/music/<name>.py: make_track(seconds, out, *, seed) -> Path` | `synth` (original, no licence) |
 | `renderer` | `engine/renderer/<name>.py: stage_assets(...)`, `build_html(recipe, copy, content, app, srcs)`, `render(html, files, workdir, out, version)` | `hyperframes` |
-| `publishers` | `engine/publishers/<name>.py: publish(video, caption, app, *, http) -> Published` (raises `PublishError`) | `youtube` (also `instagram`, `facebook`, off) |
+| `publishers` | `engine/publishers/<name>.py: publish(video, caption, app, *, http) -> Published` (raises `PublishError`) | `youtube`, `tiktok` (also `instagram`, `facebook`, off) |
 
 ## Recipes
 

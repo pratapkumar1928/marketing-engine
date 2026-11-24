@@ -3,6 +3,6 @@ llm: {provider: gemini, model: gemini-3.8-flash}   # same default as social-engi
 broll: {provider: pexels}
 music: {provider: synth}
 renderer: {provider: hyperframes, version: "0.8.106"}
-publishers: [youtube]   # instagram/facebook code kept; the ScrollSmack IG account was disabled 2026-11-21
+publishers: [youtube, tiktok]   # instagram/facebook code kept; the ScrollSmack IG account was disabled 2026-11-21
 hard_cap_per_platform: 10
 late_skip_minutes: 120

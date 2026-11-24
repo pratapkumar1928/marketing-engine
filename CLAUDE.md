@@ -1,8 +1,8 @@
 # marketing-engine
 
 Zero-touch short-video marketing for Pratap's apps (ScrollSmack first). Public repo, GitHub Actions, $0/month.
-Publishing: **YouTube Shorts only** for now. Meta disabled the ScrollSmack Instagram on 2026-11-21 (no appeal): don't
-recreate it; the instagram/facebook publishers stay but are off. TikTok isn't built (see the TikTok rule below).
+Publishing: **YouTube Shorts + TikTok inbox drafts** for now. Meta disabled the ScrollSmack Instagram on 2026-11-21 (no appeal): don't
+recreate it; the instagram/facebook publishers stay but are off.
 Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (core):
 `docs/superpowers/plans/2026-11-24-marketing-engine-core.md`. Plans 2 (trend research → recipes) and
 3 (YouTube + TikTok + audits) are not built yet.
@@ -44,9 +44,13 @@ Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (co
 - **YouTube** (`publishers/youtube.py`): refresh token → resumable upload. Unverified Google projects upload public
   (Google changed this; the spec's "private until audit" is outdated). The OAuth app must be *In production* or
   refresh tokens die in 7 days. `containsSyntheticMedia: true` on every upload (clip remixes are AI footage).
-- **TikTok**: Direct Post needs an audit that TikTok's guidelines say a tool for your own accounts won't pass, and
-  unaudited posts are private-only from private accounts. Refresh tokens rotate (old one dies on use), so a
-  stateless run can't hold one in a GitHub secret. Only the inbox-draft mode (one tap per post in the app) fits.
+- **TikTok** (`publishers/tiktok.py`) uploads **inbox drafts** (scope `video.upload`); Pratap taps to post and pastes
+  the caption from a Telegram message (inbox uploads can't carry one). Max 5 pending drafts per 24 h. Direct Post
+  is out: TikTok's audit excludes tools for your own accounts, and unaudited posts are private-only.
+- **TikTok refresh tokens rotate** (the old one dies on use), so they live Fernet-encrypted in
+  `state/<app>/tiktok_token.enc` (key: `TIKTOK_TOKEN_KEY` secret), not in a GitHub secret. Refresh only near
+  expiry; save to disk and push (`gitsync`) **before** using the new token. Never refresh from a local run.
+  First token / re-auth: `tools/tiktok_auth.py <app>`.
 - GSAP comes from jsDelivr with an SRI hash in `renderer/base.html.tpl`; bumping GSAP means recomputing it.
 - The renderer retries once with `--experimental-fast-capture=false` (known HyperFrames + system Chrome fix).
 - GitHub disables scheduled workflows in public repos after 60 days without activity. The bot's ledger
