@@ -43,6 +43,14 @@ def test_warnings_survive_truncation():
     assert len(text) <= 4096 and "CHECK MANUALLY" in text and "AUTO-PAUSED" in text and "omitted" in text
 
 
+def test_never_over_limit_near_boundary():
+    base = build_report({"a": {"events": [ev("dropped", error="")], "paused": set()}}, DAY)
+    for pad in range(4096 - len(base) - 30, 4096 - len(base) + 5):
+        events = [ev("dropped", error="e" * max(pad, 0)), ev("published", url="https://ig/1"),
+                  ev("published", url="https://ig/2")]
+        assert len(build_report({"a": {"events": events, "paused": set()}}, DAY)) <= 4096, pad
+
+
 def test_malformed_events_do_not_break_report():
     events = [{"ts": None}, {"event": "published"}, {"ts": "nonsense", "event": "failed"},
               ev("published", url="https://ig/1"), "not a dict"]

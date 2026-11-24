@@ -54,14 +54,18 @@ def build_report(per_app: dict[str, dict], day: date) -> str:
         return text[: LIMIT - 20] + "\n...(truncated)"
     if not links:
         return text
+    body = text
     text += "\n\nPosts"
     for i, link in enumerate(links):
         note = f"\n  ({len(links) - i} post links omitted)"
         last = i == len(links) - 1
         if len(text) + 1 + len(link) + (0 if last else len(note)) > LIMIT:
-            return text + note if len(text) + len(note) <= LIMIT else text
+            if i == 0:  # not even one link fits: drop the header too
+                text = body
+            text += note
+            break
         text += "\n" + link
-    return text
+    return text[:LIMIT]  # hard ceiling: warnings above are never displaced by links
 
 
 def send(text: str, *, http=requests) -> None:
