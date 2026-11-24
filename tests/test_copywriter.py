@@ -156,5 +156,11 @@ def test_single_word_ban_does_not_hit_inside_words(app):
     assert validate_copy(mk(caption="Your class schedule says otherwise"), app, []) == []
 
 
+def test_hashtags_jammed_into_one_string_are_split(app):
+    jammed = {**GOOD, "hashtags": ["#screentime','#doomscrolling', '#androidapp"]}
+    c = write_copy(PLAN, RECIPE, app, CONTENT, FakeLLM(jammed, OK_CLAIMS), [])
+    assert c.hashtags == ["#screentime", "#doomscrolling", "#androidapp"]
+
+
 def test_check_claims_returns_unsupported(app):
     assert check_claims(mk(), ["No internet permission."], FakeLLM(BAD_CLAIMS)) == ["used by 1M people"]

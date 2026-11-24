@@ -145,8 +145,9 @@ def _parse(raw: dict, keys: list[str]) -> tuple[Copy, list[str]]:
     missing = [k for k in keys if not lines.get(k)]
     hook = str(raw.get("hook", "")).strip()
     texts = {"hook": hook, **{k: lines[k] for k in keys if k in lines}}
-    c = Copy(hook=hook, texts=texts, caption=str(raw.get("caption", "")).strip(),
-             hashtags=[str(t) for t in raw.get("hashtags", [])])
+    # models sometimes jam several tags into one string ("#a','#b"): pull every #tag out of whatever came back
+    tags = re.findall(r"#\w+", " ".join(str(t) for t in raw.get("hashtags", [])))
+    c = Copy(hook=hook, texts=texts, caption=str(raw.get("caption", "")).strip(), hashtags=tags)
     return c, [f"missing line '{k}'" for k in missing] + ([] if hook else ["empty hook"])
 
 
