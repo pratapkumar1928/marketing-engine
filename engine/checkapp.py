@@ -10,7 +10,8 @@ from engine.recipes import load_recipes, pool
 from engine.types import CopyRejected, Slot
 
 REQUIRED = ["name", "store_url", "timezone", "post_times", "platforms"]
-META_PLATFORMS = {"instagram", "facebook"}
+SECRET_BLOCK = {"instagram": ("meta", "token_secret"), "facebook": ("meta", "token_secret"),
+                "youtube": ("youtube", "refresh_token_secret")}
 MAX_CLIP = 100 * 1024 * 1024
 
 
@@ -39,8 +40,9 @@ def check_app(root: Path, name: str) -> list[str]:
     for pname, p in (app.get("platforms") or {}).items():
         if p.get("enabled") and not p.get("enabled_on"):
             problems.append(f"platforms.{pname}: enabled without enabled_on")
-        if p.get("enabled") and pname in META_PLATFORMS and not (app.get("meta") or {}).get("token_secret"):
-            problems.append(f"platforms.{pname}: needs a meta block with secret names")
+        block, key = SECRET_BLOCK.get(pname, (None, None))
+        if p.get("enabled") and block and not (app.get(block) or {}).get(key):
+            problems.append(f"platforms.{pname}: needs a {block} block with secret names")
     if len(pool(app, "fact")) < 5:
         problems.append("facts.yaml: need at least 5 facts (each with a safe id and text)")
     if len(_list(d / "copy" / "hashtags.yaml")) < 5:

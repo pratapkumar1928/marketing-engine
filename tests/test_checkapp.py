@@ -46,6 +46,11 @@ def test_enabled_without_enabled_on_reported(root):
     assert any("enabled_on" in p for p in check_app(root, "newapp"))
 
 
+def test_youtube_without_secret_block_reported(root):
+    edit(root, lambda d: d["platforms"].update(youtube={"enabled": True, "enabled_on": "2026-12-05"}))
+    assert any("needs a youtube block" in p for p in check_app(root, "newapp"))
+
+
 def test_missing_icon_reported(root):
     (root / "apps" / "newapp" / "brand" / "icon.png").unlink()
     assert any("icon" in p for p in check_app(root, "newapp"))

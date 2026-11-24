@@ -23,8 +23,8 @@ Copy that folder, then fill it in:
 - `copy/style.md`: voice, target viewer, what jokes are off-limits.
 - `copy/hashtags.yaml`: 8–15 niche tags. `copy/keywords.yaml`: 5–8 b-roll search phrases.
 - `app.yaml`: name, store_url (with no tracking), bio_link with `utm_source={platform}`, brand colors from the app's
-  theme, icon in `brand/icon.png`, and the `meta` secret names `<SLUG>_IG_USER_ID`, `<SLUG>_FB_PAGE_ID`,
-  `<SLUG>_META_PAGE_TOKEN`. Keep **every platform `enabled: false`**.
+  theme, icon in `brand/icon.png`, and the `youtube` secret names `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`,
+  `<SLUG>_YOUTUBE_REFRESH_TOKEN` (`meta` names only if it will use Instagram/Facebook). Keep **every platform `enabled: false`**.
 - Optional: existing promo clips or screen recordings in `footage/` plus `footage/clips.yaml`
   (`id, file, dur, desc`, under 100 MB each). An app-specific visual is `blocks/app_overlay.html`; copy
   ScrollSmack's as the pattern and keep it inside x 80–950.
@@ -41,7 +41,7 @@ Show `facts.yaml` and the 3 previews (publish them as an Artifact or send the fi
 correct the facts. Don't enable anything before he approves.
 
 ## 5. Go live
-- List the secrets to add in GitHub (from `app.yaml: meta`), plus account setup if the app gets its own
-  Instagram/Facebook (see `docs/setup.md` §1–2). To share an existing account, point `meta` at that app's
+- List the secrets to add in GitHub (from `app.yaml: youtube`), plus channel setup if the app gets its own
+  YouTube channel (see `docs/setup.md` §1 step 5). To share a channel, point `youtube` at that app's
   secret names instead.
 - Set each platform to `enabled: true` and `enabled_on: <tomorrow>`, then commit on a branch.
