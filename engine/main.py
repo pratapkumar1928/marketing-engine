@@ -193,6 +193,9 @@ def real_deps(root: Path) -> Deps:
 
 
 def main(argv=None) -> int:
+    for stream in (sys.stdout, sys.stderr):  # model output can be any script; never crash on a cp1252 console
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(errors="replace")
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(prog="engine")
     sub = ap.add_subparsers(dest="cmd", required=True)

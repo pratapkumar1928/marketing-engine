@@ -60,6 +60,31 @@ def test_unknown_app_reported(root):
     assert check_app(root, "nope") != []
 
 
+def test_one_failed_preview_does_not_stop_the_rest(root, capsys):
+    from engine.types import CopyRejected
+    calls = {"n": 0}
+
+    def write_copy(*a):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise CopyRejected("non-Latin letters not allowed: 拼")
+        return Copy(hook="h", texts={"hook": "h", "problem": "p"}, caption="c", hashtags=[])
+
+    def render(recipe, copy, content, app, *, broll, music, clip, out):
+        if calls["n"] == 2:
+            raise RuntimeError("hyperframes check failed")
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_bytes(b"mp4")
+        return Path(out)
+
+    deps = Deps(llm=None, broll=lambda q, d, rng: None, music=lambda s, out, seed: None, render=render,
+                publishers={}, rng=random.Random(0), write_copy=write_copy)
+    paths = preview(root, "newapp", 3, deps)
+    assert len(paths) == 1
+    out = capsys.readouterr().out
+    assert "copy rejected" in out and "render failed" in out
+
+
 def test_preview_never_touches_ledger(root):
     rendered = []
 

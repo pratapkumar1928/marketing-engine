@@ -81,6 +81,8 @@ def preview(root: Path, name: str, n: int, deps) -> list[Path]:
             out.append(video)
         except CopyRejected as e:
             print(f"preview {i}: copy rejected: {e.reason}")
+        except Exception as e:  # noqa: BLE001 - one bad preview must not stop the others
+            print(f"preview {i}: render failed: {type(e).__name__}: {str(e).splitlines()[0][:200] if str(e) else ''}")
     return out
 
 
