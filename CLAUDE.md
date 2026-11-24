@@ -1,0 +1,42 @@
+# marketing-engine
+
+Zero-touch short-video marketing for Pratap's apps (ScrollSmack first). Public repo, GitHub Actions, $0/month.
+Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (core):
+`docs/superpowers/plans/2026-11-24-marketing-engine-core.md`. Plans 2 (trend research → recipes) and
+3 (YouTube + TikTok + audits) are not built yet.
+
+## Rules that are easy to break
+- **The `publishing` ledger line is written (fsync'd) before any post-creating network call.** Never reorder it.
+- **A `publishing` line older than 30 min with no outcome becomes `unknown` and is never re-posted.** The
+  daily report says "CHECK MANUALLY". Don't add auto-retry for post-creating calls (`creates_post=True` in
+  `publishers/meta_http.call`): only `ConnectTimeout` / 429 count as retryable there, and even those are
+  not retried in the same run.
+- **A slot is planned, dropped or posted at most once.** A dropped slot (copy rejected, render failed) is
+  logged per platform so later runs don't retry it.
+- **Missed slots are skipped, never burst-posted** (`late_skip_minutes`, 120).
+- **The repo is public.** Secrets only in GitHub Actions secrets (`ENGINE_SECRETS` = `toJSON(secrets)`).
+  No secret in any log, error or exception: every client re-raises `type(e).__name__` only, `from None`.
+  Tokens go in headers (`x-goog-api-key`, `Authorization: OAuth …`), never URLs, except Telegram's (path),
+  whose errors are swallowed the same way. `.env` is read only from the repo root and never on Actions.
+- Workflows: `schedule` + `workflow_dispatch` only. **Never `pull_request_target`.** Every `uses:` is pinned to a
+  full SHA. Only `run.yml` has `contents: write` (ledger commit).
+- **Roast lines are verbatim from ScrollSmack's `strings.xml`** via `tools/sync_roasts.py` → `copy/roasts.yaml`.
+  Never generated, never edited by hand. The renderer reads them from the content item, not from AI copy.
+- **AI copy may only claim what `facts.yaml` says.** `copywriter.check_claims` fails closed on any malformed
+  checker reply. Copy with non-Latin letters, markdown headings, `<`/`>` or banned phrases is rejected.
+- **Safe zone:** all burned-in text inside `SAFE_BOX` (x 80–950, y 220–1536). App overlay partials must
+  respect it too (ScrollSmack's panel is 870 px wide for this reason).
+- GSAP comes from jsDelivr with an SRI hash in `renderer/base.html.tpl`; bumping GSAP means recomputing it.
+- The renderer retries once with `--experimental-fast-capture=false` (known HyperFrames + system Chrome fix).
+- GitHub disables scheduled workflows in public repos after 60 days without activity. The bot's ledger
+  commits keep it alive, but after a long `PAUSE`, check the Actions tab for "workflow disabled".
+
+## Adding things
+- Provider: one file in the slot's folder + its name in `config.yaml` (contracts in README).
+- App: `/add-app` skill or `docs/add-an-app.md`; validate with `python -m engine.main check-app <name> --preview 3`.
+- Recipe: JSON in `recipes/` (shared) or `apps/<app>/recipes/`; must pass `engine.recipes.validate_recipe`.
+
+## Run
+- Tests: `.venv/Scripts/python -m pytest` (fast), `-m slow` (real HyperFrames renders, ~4 min; set
+  `HYPERFRAMES_BROWSER_PATH` to system Chrome on Windows).
+- Local dry run: `DRY_RUN=1 python -m engine.main run --now <ISO>`. Delete `state/` afterwards: it's real ledger data.

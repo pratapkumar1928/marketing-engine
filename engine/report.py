@@ -1,7 +1,7 @@
 """Daily Telegram summary. Notification only: no buttons, nothing waits on a reply."""
 import logging
 from collections import Counter
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import requests
@@ -61,9 +61,14 @@ def send(text: str, *, http=requests) -> None:
         raise RuntimeError(f"telegram send failed: {type(e).__name__}") from None
 
 
+def default_day(now: datetime) -> date:
+    """The cron fires 04:30 UTC: 23:30 EST or 00:30 EDT. An hour back is always the day being reported."""
+    return (now.astimezone(TZ) - timedelta(hours=1)).date()
+
+
 def main(root, day_iso: str | None) -> int:
     from engine.main import ledger_path, paused_platforms
-    day = date.fromisoformat(day_iso) if day_iso else datetime.now(TZ).date()
+    day = date.fromisoformat(day_iso) if day_iso else default_day(datetime.now(TZ))
     per_app = {}
     for slug in list_apps(root):
         app = load_app(root, slug)

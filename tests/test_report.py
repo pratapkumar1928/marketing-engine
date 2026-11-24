@@ -36,6 +36,14 @@ def test_report_truncates_to_4096():
     assert len(build_report({"a": {"events": events, "paused": set()}}, DAY)) <= 4096
 
 
+def test_default_day_covers_cron_in_winter_and_summer():
+    from datetime import datetime, timezone
+
+    from engine.report import default_day
+    assert default_day(datetime(2026, 12, 6, 4, 30, tzinfo=timezone.utc)) == date(2026, 12, 5)  # 23:30 EST
+    assert default_day(datetime(2027, 7, 6, 4, 30, tzinfo=timezone.utc)) == date(2027, 7, 5)  # 00:30 EDT
+
+
 class FakeHTTP:
     def __init__(self, exc=None):
         self.exc, self.calls = exc, []
