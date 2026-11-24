@@ -1,6 +1,7 @@
 """Pexels free stock video. Never fails a video: any problem returns None and the renderer uses a dark background."""
 import logging
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 
@@ -8,6 +9,7 @@ from engine.config import secret
 
 log = logging.getLogger(__name__)
 SEARCH = "https://api.pexels.com/videos/search"
+MAX_BYTES = 150 * 1024 * 1024
 
 
 def _pick_file(video: dict) -> dict | None:
@@ -32,14 +34,27 @@ def fetch(query: str, out_dir: Path, *, rng, http=requests, min_dur: float = 3.0
         if not options:
             return None
         v, f = rng.choice(options)
-        out = Path(out_dir) / f"pexels_{v['id']}_{f['height']}.mp4"
+        vid, h = int(v["id"]), int(f["height"])  # remote values: numbers only in the file name
+        link = urlparse(str(f["link"]))
+        if link.scheme != "https" or not (link.hostname or "").endswith(".pexels.com"):
+            raise ValueError("unexpected download host")
+        base = Path(out_dir).resolve()
+        out = base / f"pexels_{vid}_{h}.mp4"
         out.parent.mkdir(parents=True, exist_ok=True)
         if not out.exists():
-            dl = http.get(f["link"], stream=True, timeout=120)
+            dl = http.get(link.geturl(), stream=True, timeout=120)
             dl.raise_for_status()
-            with open(out, "wb") as fh:
-                for chunk in dl.iter_content(chunk_size=1 << 16):
-                    fh.write(chunk)
+            part, written = out.with_suffix(".part"), 0
+            try:
+                with open(part, "wb") as fh:
+                    for chunk in dl.iter_content(chunk_size=1 << 16):
+                        written += len(chunk)
+                        if written > MAX_BYTES:
+                            raise ValueError("download too large")
+                        fh.write(chunk)
+                part.replace(out)
+            finally:
+                part.unlink(missing_ok=True)
         return out
     except Exception as e:  # noqa: BLE001 - b-roll is optional; never echo the message (may carry the key)
         log.warning("pexels b-roll skipped: %s", type(e).__name__)

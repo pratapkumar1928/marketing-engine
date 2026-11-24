@@ -100,10 +100,16 @@ def validate_copy(c: Copy, app: dict, recent_captions: list[str]) -> list[str]:
     raw = _all_text(c)
     if _FORMATTING.search(raw):
         reasons.append("formatting not allowed (markdown headings, < >, code fences)")
+    if any(ch.isalpha() and "LATIN" not in unicodedata.name(ch, "") for ch in raw):
+        reasons.append("non-Latin letters not allowed (look-alike characters)")
     text = normalize(raw)
+    compact = text.replace(" ", "")
     for word in GLOBAL_BANNED + [str(w) for w in app.get("banned", [])]:
         phrase = normalize(word).strip()
-        if phrase and f" {phrase} " in text:
+        if not phrase:
+            continue
+        # single words: whole-word match ("class" must not hit "ass"); phrases: also with all separators removed
+        if f" {phrase} " in text or (" " in phrase and phrase.replace(" ", "") in compact):
             reasons.append(f"banned phrase: {word.lower()}")
     for old in recent_captions:
         if difflib.SequenceMatcher(None, c.caption.lower(), str(old).lower()).ratio() >= DUP_RATIO:

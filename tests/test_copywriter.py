@@ -142,5 +142,19 @@ def test_banned_phrase_evasion_caught(app):
         assert any("download now" in r for r in validate_copy(mk(caption=evasive), app, [])), evasive
 
 
+def test_non_latin_letters_rejected(app):
+    assert any("non-Latin" in r for r in validate_copy(mk(caption="dоwnload is fine"), app, []))  # Cyrillic о
+    assert validate_copy(mk(caption="Café vibes, naïve thumb 🙃"), app, []) == []
+
+
+def test_split_multiword_banned_phrase_caught(app):
+    for evasive in ["d.o.w.n.l.o.a.d now", "down load now", "downl-oad n-ow"]:
+        assert any("download now" in r for r in validate_copy(mk(caption=evasive), app, [])), evasive
+
+
+def test_single_word_ban_does_not_hit_inside_words(app):
+    assert validate_copy(mk(caption="Your class schedule says otherwise"), app, []) == []
+
+
 def test_check_claims_returns_unsupported(app):
     assert check_claims(mk(), ["No internet permission."], FakeLLM(BAD_CLAIMS)) == ["used by 1M people"]

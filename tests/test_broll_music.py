@@ -44,14 +44,14 @@ def key(monkeypatch):
 
 def video(vid, dur, files):
     return {"id": vid, "duration": dur, "video_files": [
-        {"link": f"https://cdn/{vid}/{w}x{h}.mp4", "width": w, "height": h, "file_type": "video/mp4"} for w, h in files]}
+        {"link": f"https://videos.pexels.com/{vid}/{w}x{h}.mp4", "width": w, "height": h, "file_type": "video/mp4"} for w, h in files]}
 
 
 def test_pexels_picks_portrait_hd(tmp_path):
     http = FakeHTTP({"videos": [video(1, 2, [(1080, 1920)]), video(2, 10, [(1920, 1080), (720, 1280), (1080, 1920)])]})
     p = pexels.fetch("phone at night", tmp_path, rng=random.Random(0), http=http)
     assert p and p.exists() and p.read_bytes() == b"mp4bytes"
-    assert http.calls[-1][0] == "https://cdn/2/1080x1920.mp4"
+    assert http.calls[-1][0] == "https://videos.pexels.com/2/1080x1920.mp4"
     url, kw = http.calls[0]
     assert kw["headers"]["Authorization"] == KEY and KEY not in url
     assert kw["params"]["orientation"] == "portrait"
@@ -60,7 +60,7 @@ def test_pexels_picks_portrait_hd(tmp_path):
 def test_pexels_falls_back_to_tallest_portrait(tmp_path):
     http = FakeHTTP({"videos": [video(3, 9, [(540, 960), (720, 1280), (1280, 720)])]})
     pexels.fetch("q", tmp_path, rng=random.Random(0), http=http)
-    assert http.calls[-1][0] == "https://cdn/3/720x1280.mp4"
+    assert http.calls[-1][0] == "https://videos.pexels.com/3/720x1280.mp4"
 
 
 def test_pexels_no_portrait_returns_none(tmp_path):
@@ -76,6 +76,29 @@ def test_pexels_missing_key_returns_none(tmp_path, monkeypatch):
     monkeypatch.delenv("PEXELS_API_KEY")
     monkeypatch.setattr("engine.config.REPO_ROOT", tmp_path)
     assert pexels.fetch("q", tmp_path, rng=random.Random(0), http=FakeHTTP({"videos": []})) is None
+
+
+def test_pexels_rejects_non_pexels_host(tmp_path):
+    v = video(5, 9, [(1080, 1920)])
+    v["video_files"][0]["link"] = "http://169.254.169.254/latest/meta-data"
+    http = FakeHTTP({"videos": [v]})
+    assert pexels.fetch("q", tmp_path, rng=random.Random(0), http=http) is None
+    assert len(http.calls) == 1  # never fetched the bad link
+
+
+def test_pexels_non_numeric_id_rejected(tmp_path):
+    v = video("../../evil", 9, [(1080, 1920)])
+    v["video_files"][0]["link"] = "https://videos.pexels.com/x.mp4"
+    assert pexels.fetch("q", tmp_path, rng=random.Random(0), http=FakeHTTP({"videos": [v]})) is None
+    assert list(tmp_path.parent.glob("*evil*")) == []
+
+
+def test_pexels_download_size_capped(tmp_path, monkeypatch):
+    monkeypatch.setattr(pexels, "MAX_BYTES", 4)
+    v = video(6, 9, [(1080, 1920)])
+    v["video_files"][0]["link"] = "https://videos.pexels.com/6.mp4"
+    assert pexels.fetch("q", tmp_path, rng=random.Random(0), http=FakeHTTP({"videos": [v]})) is None
+    assert list(tmp_path.glob("*.mp4")) == []
 
 
 def test_synth_writes_wav_of_length(tmp_path):
