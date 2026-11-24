@@ -24,12 +24,17 @@ def load_app(root: Path, name: str) -> dict:
     d = Path(root) / "apps" / name
     app = read_yaml(d / "app.yaml")
     app["dir"] = d
-    app.setdefault("slug", name)
+    app["slug"] = name  # identity is the folder name; app.yaml can't redirect ledger/state paths
     return app
 
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
 def _dotenv() -> dict:
-    p = Path(".env")
+    if os.environ.get("GITHUB_ACTIONS"):
+        return {}  # CI secrets come only from ENGINE_SECRETS / env
+    p = REPO_ROOT / ".env"
     if not p.is_file():
         return {}
     out = {}
@@ -44,7 +49,11 @@ def secret(name: str) -> str:
     """GitHub Actions secrets (ENGINE_SECRETS json) > env > ./.env. Missing -> KeyError(name) only."""
     blob = os.environ.get("ENGINE_SECRETS")
     if blob:
-        val = json.loads(blob).get(name)
+        try:
+            data = json.loads(blob)
+        except json.JSONDecodeError:
+            raise RuntimeError("ENGINE_SECRETS is not valid JSON") from None  # fail closed, no content echoed
+        val = data.get(name)
         if val:
             return val
     if os.environ.get(name):
