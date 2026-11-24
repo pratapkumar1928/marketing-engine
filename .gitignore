@@ -1,0 +1,8 @@
+.env*
+out/
+cache/
+__pycache__/
+.venv/
+node_modules/
+.superpowers/
+*.egg-info/

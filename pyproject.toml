@@ -1,0 +1,15 @@
+[project]
+name = "marketing-engine"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["requests", "PyYAML", "jsonschema", "tzdata"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["engine", "engine.llm", "engine.broll", "engine.music", "engine.renderer", "engine.publishers"]
+
+[tool.pytest.ini_options]
+markers = ["slow: real renders / network (deselect with -m 'not slow')"]
+addopts = "-m 'not slow'"

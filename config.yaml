@@ -1,0 +1,8 @@
+# The switchboard: which provider fills each slot. Swap a provider = change a name here.
+llm: {provider: gemini, model: gemini-3.8-flash}   # same default as social-engine
+broll: {provider: pexels}
+music: {provider: synth}
+renderer: {provider: hyperframes, version: "0.8.106"}
+publishers: [instagram, facebook]
+hard_cap_per_platform: 10
+late_skip_minutes: 120
