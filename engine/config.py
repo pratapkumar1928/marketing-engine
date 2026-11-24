@@ -28,6 +28,18 @@ def load_app(root: Path, name: str) -> dict:
     return app
 
 
+def app_file(app: dict, rel: str) -> Path:
+    """A path from app data (icon, clip file), confined to the app's folder. Escapes raise ValueError."""
+    base = Path(app["dir"]).resolve()
+    rel = str(rel or "")
+    if not rel or Path(rel).is_absolute() or Path(rel).drive:
+        raise ValueError("asset path must be relative to the app folder")
+    p = (base / rel).resolve()
+    if p == base or not p.is_relative_to(base):
+        raise ValueError("asset path outside the app folder")
+    return p
+
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 

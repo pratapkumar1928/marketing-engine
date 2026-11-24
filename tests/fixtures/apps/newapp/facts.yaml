@@ -1,0 +1,6 @@
+# Only true statements, each traceable to a source (cite it in a comment). The first one is on every end card.
+- {id: free, text: "Free on Google Play."}          # source: store listing
+- {id: offline, text: "Works offline."}              # source: README
+- {id: no_account, text: "No account needed."}       # source: README
+- {id: one_tap, text: "One tap to start."}           # source: store listing
+- {id: private, text: "Your data stays on your phone."}  # source: privacy policy

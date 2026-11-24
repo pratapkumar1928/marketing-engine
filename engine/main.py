@@ -20,7 +20,7 @@ from typing import Callable
 import yaml
 
 from engine import copywriter
-from engine.config import list_apps, load_app, load_config
+from engine.config import app_file, list_apps, load_app, load_config
 from engine.ledger import append, read, recent
 from engine.planner import plan_slot
 from engine.recipes import load_recipes, pool
@@ -99,6 +99,25 @@ def run(root: Path, now: datetime, *, deps: Deps, dry_run: bool | None = None) -
     return written
 
 
+def render_slot(root, app, slot, recipes, events, deps, out, on_planned=lambda plan: None):
+    """Plan, write and render one video. Raises CopyRejected or a render error. -> (video, plan, copy)."""
+    plan = plan_slot(slot, app, recipes, events, deps.rng)
+    recipe = next(r for r in recipes if r["id"] == plan.recipe_id)
+    on_planned(plan)
+    content = _item(app, recipe["content"], plan.content_id)
+    copy = deps.write_copy(plan, recipe, app, content, deps.llm, recent(events, "caption", 200))
+    broll = None
+    if any(b.get("bg") == "broll" for b in recipe["beats"]):
+        keywords = yaml.safe_load((Path(app["dir"]) / "copy" / "keywords.yaml").read_text(encoding="utf-8"))
+        broll = deps.broll(deps.rng.choice(keywords), Path(root) / "cache" / "broll", rng=deps.rng)
+    seconds = sum(8.0 if b["dur"] == "clip" else float(b["dur"]) for b in recipe["beats"]) + 0.5
+    music = deps.music(seconds, Path(root) / "cache" / "music" / f"{app['slug']}_{slot.slot_id.replace('#', '_')}.wav",
+                       seed=deps.rng.randrange(1 << 30))
+    clip = app_file(app, f"footage/{content['file']}") if recipe["content"] == "clip" else None
+    video = deps.render(recipe, copy, content, app, broll=broll, music=music, clip=clip, out=out)
+    return video, plan, copy
+
+
 def _run_app(root, app, now, deps, dry_run, hard, late) -> list[dict]:
     slug, path = app["slug"], ledger_path(root, app["slug"])
     written = []
@@ -109,43 +128,34 @@ def _run_app(root, app, now, deps, dry_run, hard, late) -> list[dict]:
         written.append(ev)
 
     _mark_stale(path, read(path), now, slug)
-    events = read(path)
-    paused = paused_platforms(app, events)
-    for slot in due_slots(app, now, events, hard, late):
+    for slot in due_slots(app, now, read(path), hard, late):
+        events = read(path)
+        paused = paused_platforms(app, events)  # recomputed per slot: failures earlier in this run count
         plats = [p for p in slot.platforms if p not in paused and p in deps.publishers]
         if not plats:
             continue
-        events = read(path)
         recipes = load_recipes(root, app)
         if not recipes:
             log.warning("%s: no usable recipes", slug)
             return written
-        plan = plan_slot(slot, app, recipes, events, deps.rng)
-        recipe = next(r for r in recipes if r["id"] == plan.recipe_id)
-        log_event(slot_id=slot.slot_id, platform=None, event="planned", recipe=plan.recipe_id,
-                  combo=plan.combo, content_id=plan.content_id)
-        content = _item(app, recipe["content"], plan.content_id)
+        planned = {}
+
+        def on_planned(plan):
+            planned["plan"] = plan
+            log_event(slot_id=slot.slot_id, platform=None, event="planned", recipe=plan.recipe_id,
+                      combo=plan.combo, content_id=plan.content_id)
 
         def drop(reason: str):
             for p in plats:
-                log_event(slot_id=slot.slot_id, platform=p, event="dropped", recipe=plan.recipe_id, error=reason[:300])
+                log_event(slot_id=slot.slot_id, platform=p, event="dropped",
+                          recipe=planned["plan"].recipe_id, error=reason[:300])
 
+        out = root / "out" / slug / f"{slot.slot_id.replace('#', '_')}.mp4"
         try:
-            copy = deps.write_copy(plan, recipe, app, content, deps.llm, recent(events, "caption", 200))
+            video, plan, copy = render_slot(root, app, slot, recipes, events, deps, out, on_planned)
         except CopyRejected as e:
             drop(e.reason)
             continue
-        out = root / "out" / slug / f"{slot.slot_id.replace('#', '_')}.mp4"
-        try:
-            broll = None
-            if any(b.get("bg") == "broll" for b in recipe["beats"]):
-                keywords = yaml.safe_load((Path(app["dir"]) / "copy" / "keywords.yaml").read_text(encoding="utf-8"))
-                broll = deps.broll(deps.rng.choice(keywords), root / "cache" / "broll", rng=deps.rng)
-            seconds = sum(8.0 if b["dur"] == "clip" else float(b["dur"]) for b in recipe["beats"]) + 0.5
-            music = deps.music(seconds, root / "cache" / "music" / f"{slug}_{slot.slot_id.replace('#', '_')}.wav",
-                               seed=deps.rng.randrange(1 << 30))
-            clip = Path(app["dir"]) / "footage" / content["file"] if recipe["content"] == "clip" else None
-            video = deps.render(recipe, copy, content, app, broll=broll, music=music, clip=clip, out=out)
         except Exception as e:  # noqa: BLE001 - a failed render drops this slot only
             drop(f"render failed: {type(e).__name__}: {str(e).splitlines()[0][:200] if str(e) else ''}")
             continue
@@ -173,7 +183,7 @@ def real_deps(root: Path) -> Deps:
     r = renderer.get(cfg["renderer"])
 
     def render(recipe, copy, content, app, *, broll, music, clip, out):
-        icon = Path(app["dir"]) / app.get("brand", {}).get("icon", "brand/icon.png")
+        icon = app_file(app, app.get("brand", {}).get("icon", "brand/icon.png"))
         srcs, files = r.stage_assets(broll=broll, music=music, clip=clip, icon=icon)
         html = r.build_html(recipe, copy, content, app, srcs)
         return r.render(html, files, Path(root) / "cache" / "render" / app["slug"], out, cfg["renderer"]["version"])

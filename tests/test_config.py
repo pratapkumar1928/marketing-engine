@@ -4,7 +4,7 @@ from engine.config import list_apps, load_app, load_config, secret
 
 
 def test_list_apps_finds_folders_with_app_yaml(tmp_root):
-    assert list_apps(tmp_root) == ["demo"]
+    assert list_apps(tmp_root) == ["demo", "newapp"]
 
 
 def test_load_app_adds_dir(tmp_root):
@@ -58,6 +58,15 @@ def test_malformed_engine_secrets_fails_closed(monkeypatch):
     with pytest.raises(RuntimeError) as e:
         secret("X")
     assert "ENGINE_SECRETS" in str(e.value) and "b" not in str(e.value).replace("ENGINE_SECRETS", "")
+
+
+def test_app_file_confined_to_app_dir(tmp_root):
+    from engine.config import app_file
+    app = load_app(tmp_root, "demo")
+    assert app_file(app, "brand/icon.png") == (tmp_root / "apps" / "demo" / "brand" / "icon.png").resolve()
+    for bad in ("../../config.yaml", "/etc/passwd", "C:/Windows/win.ini", ""):
+        with pytest.raises(ValueError):
+            app_file(app, bad)
 
 
 def test_config_names_providers(root):

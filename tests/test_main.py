@@ -169,6 +169,32 @@ def test_resume_after_clears_pause(root):
     assert [e["event"] for e in ledger(root) if e.get("platform") == "instagram"][-1] == "published"
 
 
+def test_pause_recomputed_between_slots_in_one_run(root):
+    """Two due slots in one run: after the platform fails twice, a third slot must not try it."""
+    c = Calls()
+    a = yaml.safe_load((root / "apps/demo/app.yaml").read_text())
+    a["post_times"] = ["08:00", "08:20", "08:40"]
+    a["platforms"]["instagram"]["target"] = 3
+    a["platforms"]["facebook"]["target"] = 3
+    (root / "apps/demo/app.yaml").write_text(yaml.safe_dump(a))
+    pubs = {"instagram": failing("instagram", 0, c), "facebook": fake_deps(root, c).publishers["facebook"]}
+    run(root, datetime(2026, 12, 5, 8, 45, tzinfo=NY), deps=fake_deps(root, c, publish=pubs), dry_run=False)
+    assert c.published.count("instagram") == 2 and c.published.count("facebook") == 3
+
+
+def test_clip_path_outside_app_dir_dropped(root):
+    d = root / "apps" / "demo"
+    (d / "footage").mkdir()
+    (d / "footage" / "clips.yaml").write_text(yaml.safe_dump([{"id": "evil", "file": "../../../config.yaml", "dur": 8}]))
+    (d / "recipes").mkdir()
+    for rid in ("fact_card", "problem_app"):  # every usable recipe is the clip one
+        (d / "recipes" / f"{rid}.json").write_text((ROOT / "apps/scrollsmack/recipes/clip_remix.json").read_text()
+                                                   .replace('"clip_remix"', f'"{rid}"'))
+    c = Calls()
+    run(root, NOW, deps=fake_deps(root, c), dry_run=False)
+    assert c.rendered == [] and any("outside" in e.get("error", "") for e in ledger(root) if e["event"] == "dropped")
+
+
 def test_pause_file_stops_everything(root):
     (root / "PAUSE").write_text("")
     c = Calls()
