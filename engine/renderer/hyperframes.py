@@ -209,12 +209,16 @@ def stage_assets(*, broll: Path | None, music: Path | None, clip: Path | None, i
     return srcs, files
 
 
-_SECRETISH = re.compile(r"KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL", re.I)
+_ENV_ALLOW = {"PATH", "PATHEXT", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "TMP", "TMPDIR",
+              "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "PROGRAMFILES", "PROGRAMFILES(X86)",
+              "PROGRAMDATA", "LANG", "LC_ALL", "TZ", "CI", "DISPLAY"}
+_ENV_PREFIX = ("HYPERFRAMES_", "NODE_", "NPM_CONFIG_", "XDG_", "PUPPETEER_")
 
 
 def _clean_env() -> dict[str, str]:
-    """npx pulls third-party code: it never sees our secrets."""
-    return {k: v for k, v in os.environ.items() if k != "ENGINE_SECRETS" and not _SECRETISH.search(k)}
+    """npx runs third-party code: hand it only what Node, npm and Chrome need (allowlist, never secrets)."""
+    return {k: v for k, v in os.environ.items()
+            if k.upper() in _ENV_ALLOW or k.upper().startswith(_ENV_PREFIX)}
 
 
 def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess:

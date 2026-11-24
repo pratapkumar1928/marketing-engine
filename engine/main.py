@@ -224,7 +224,10 @@ def main(argv=None) -> int:
     a = ap.parse_args(argv)
     if a.cmd == "run":
         now = datetime.fromisoformat(a.now) if a.now else datetime.now(timezone.utc)
-        events = run(ROOT, now, deps=real_deps(ROOT))
+        if now.tzinfo is None:
+            now = now.replace(tzinfo=timezone.utc)
+        # a pretend time is for testing only: it never posts (its slot ids aren't real)
+        events = run(ROOT, now, deps=real_deps(ROOT), dry_run=True if a.now else None)
         for e in events:
             log.info("%s %s %s %s", e.get("slot_id"), e.get("platform") or "-", e["event"], e.get("url") or e.get("error") or "")
         return 0

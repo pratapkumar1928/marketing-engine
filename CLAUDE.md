@@ -16,10 +16,14 @@ Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (co
   ledger doesn't know about would be re-posted by the next run, whose checkout comes from the remote.
 - `run.yml` checks out `ref: github.ref_name` (the branch tip), not the queued `github.sha`: a run that waited
   in the concurrency queue must see the previous run's ledger. `state/**/ledger.jsonl` merges by `union`.
-- A manual dispatch that overrides `dry_run` or `now` does not commit the ledger, so tests never use up real slots.
+- `run --now <ISO>` is always a dry run (pretend slot ids are never posted). A manual dispatch with `now`, or one
+  forcing `dry_run=1` while the repo is live, does not commit the ledger, so tests never use up real slots.
+  A `dry_run=0` dispatch does commit: real posts are always recorded.
+- Shell lines in workflows never contain `${{ }}`: pass values through `env:` (script-injection rule).
 - Duplicate-caption checks compare `caption_text` (no hashtags), not `caption`.
-- The renderer's `npx` subprocess gets an environment with `ENGINE_SECRETS` and every `*KEY*/*TOKEN*/*SECRET*`
-  variable removed: it runs third-party npm code.
+- The renderer's `npx` subprocess gets an **allowlisted** environment (`_ENV_ALLOW` + `HYPERFRAMES_/NODE_/NPM_CONFIG_/
+  XDG_/PUPPETEER_` prefixes in `renderer/hyperframes.py`): it runs third-party npm code. If a render breaks on a new
+  machine, add the missing variable there, never pass `os.environ` wholesale.
 - **A slot is planned, dropped or posted at most once.** A dropped slot (copy rejected, render failed) is
   logged per platform so later runs don't retry it.
 - **Missed slots are skipped, never burst-posted** (`late_skip_minutes`, 120).

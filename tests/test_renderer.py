@@ -95,6 +95,8 @@ def test_subprocess_env_has_no_secrets(monkeypatch):
     monkeypatch.setenv("ENGINE_SECRETS", '{"X":"y"}')
     monkeypatch.setenv("GEMINI_API_KEY", "k")
     monkeypatch.setenv("SCROLLSMACK_META_PAGE_TOKEN", "t")
+    monkeypatch.setenv("NEWAPP_PAGE_AUTH", "z")  # secret with an innocent name: allowlist must still drop it
+    monkeypatch.setenv("HYPERFRAMES_BROWSER_PATH", "/usr/bin/google-chrome")
     seen = {}
 
     def fake_run(cmd, **kw):
@@ -105,6 +107,7 @@ def test_subprocess_env_has_no_secrets(monkeypatch):
     hf._run(["npx", "x"], Path("."))
     env = seen["env"]
     assert "ENGINE_SECRETS" not in env and "GEMINI_API_KEY" not in env and "SCROLLSMACK_META_PAGE_TOKEN" not in env
+    assert "NEWAPP_PAGE_AUTH" not in env and env["HYPERFRAMES_BROWSER_PATH"] == "/usr/bin/google-chrome"
     assert "PATH" in env or "Path" in env
 
 

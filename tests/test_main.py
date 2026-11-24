@@ -263,6 +263,18 @@ def test_planner_error_drops_slot_and_later_slots_continue(root, monkeypatch):
     assert any(e["event"] == "published" and e["slot_id"] == "2026-12-05#1" for e in events)
 
 
+def test_cli_now_forces_dry_run(monkeypatch):
+    import engine.main as m
+    seen = {}
+    monkeypatch.setenv("DRY_RUN", "0")
+    monkeypatch.setattr(m, "real_deps", lambda root: None)
+    monkeypatch.setattr(m, "run", lambda root, now, *, deps, dry_run=None: seen.update(dry_run=dry_run) or [])
+    m.main(["run", "--now", "2026-12-05T08:05:00-05:00"])
+    assert seen["dry_run"] is True
+    m.main(["run"])
+    assert seen["dry_run"] is None  # normal runs follow DRY_RUN
+
+
 def test_pause_file_stops_everything(root):
     (root / "PAUSE").write_text("")
     c = Calls()
