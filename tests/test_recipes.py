@@ -79,6 +79,34 @@ def test_app_recipe_overrides_shared_by_id(tmp_path):
     assert fc["weight"] == 7
 
 
+def test_too_many_beats_rejected():
+    beats = [{"block": "fact", "dur": 0.5}] * 13 + [END]
+    assert validate_recipe(r(beats)) != []
+
+
+def test_tiny_beat_rejected():
+    assert validate_recipe(r([{"block": "fact", "dur": 0.1}, {"block": "fact", "dur": 6}, END])) != []
+
+
+def test_non_finite_numbers_rejected(tmp_path):
+    bad = '{"id":"nan","content":"fact","weight":NaN,"beats":[{"block":"fact","dur":Infinity},{"block":"end_card","dur":2}]}'
+    app = _app(tmp_path, "a", {"facts.yaml": [{"id": "f1", "text": "x"}], "recipes/nan.json": bad})
+    assert "nan" not in {x["id"] for x in load_recipes(tmp_path, app)}
+
+
+def test_unreadable_recipe_file_skipped(tmp_path):
+    app = _app(tmp_path, "a", {"facts.yaml": [{"id": "f1", "text": "x"}]})
+    (app["dir"] / "recipes").mkdir(exist_ok=True)
+    (app["dir"] / "recipes" / "bin.json").write_bytes(b"\xff\xfe\x00garbage")
+    assert {x["id"] for x in load_recipes(tmp_path, app)} == {"fact_card", "problem_app"}
+
+
+def test_pool_drops_malformed_items(tmp_path):
+    from engine.recipes import pool
+    app = _app(tmp_path, "a", {"facts.yaml": [{"id": "ok_1", "text": "x"}, {"id": "a:b", "text": "y"}, "str", {"text": "no id"}]})
+    assert [i["id"] for i in pool(app, "fact")] == ["ok_1"]
+
+
 def test_invalid_recipe_skipped(tmp_path):
     bad = r([{"block": "fact", "dur": 1}])
     bad["id"] = "bad"

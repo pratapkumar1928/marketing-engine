@@ -11,13 +11,14 @@
     "beats": {
       "type": "array",
       "minItems": 2,
+      "maxItems": 12,
       "items": {
         "type": "object",
         "required": ["block", "dur"],
         "additionalProperties": false,
         "properties": {
           "block": {"enum": ["hook_text", "text_beat", "broll", "app_clip", "app_overlay", "fact", "end_card"]},
-          "dur": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"const": "clip"}]},
+          "dur": {"oneOf": [{"type": "number", "minimum": 0.4, "maximum": 30}, {"const": "clip"}]},
           "bg": {"enum": ["broll", "clip", "dark"]},
           "text": {"type": "string", "pattern": "^(hook|content|line:[a-z_]+)$"},
           "transition": {"enum": ["cut", "fade", "slide_up", "punch"]}
