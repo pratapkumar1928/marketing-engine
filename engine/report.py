@@ -14,41 +14,54 @@ LIMIT = 4096
 TZ = ZoneInfo("America/New_York")
 
 
-def _on_day(e: dict, day: date) -> bool:
+def _on_day(e, day: date) -> bool:
     try:
         return datetime.fromisoformat(e["ts"]).astimezone(TZ).date() == day
-    except (KeyError, ValueError):
+    except (KeyError, TypeError, ValueError):
         return False
 
 
 def build_report(per_app: dict[str, dict], day: date) -> str:
-    """per_app: {slug: {"events": [...], "paused": {platform, ...}}}"""
-    lines = [f"Marketing engine, {day.isoformat()}"]
+    """per_app: {slug: {"events": [...], "paused": {platform, ...}}}
+
+    Warnings and counts always come first and are never dropped for space; post links are the
+    lowest priority and are trimmed (with a count) when the message would pass Telegram's limit.
+    """
+    lines, links = [f"Marketing engine, {day.isoformat()}"], []
     for slug, data in per_app.items():
-        today = [e for e in data["events"] if _on_day(e, day)]
-        lines.append(f"\n{slug}")
-        posted = Counter(e["platform"] for e in today if e["event"] == "published")
-        dry = Counter(e["platform"] for e in today if e["event"] == "dry_run")
+        today = [e for e in data.get("events", []) if isinstance(e, dict) and _on_day(e, day)]
+        section = []
+        if data.get("paused"):
+            section.append(f"  AUTO-PAUSED: {', '.join(sorted(data['paused']))} (set resume_after in app.yaml)")
+        for e in today:
+            p, s, err, kind = e.get("platform", "?"), e.get("slot_id", "?"), e.get("error", ""), e.get("event")
+            if kind == "unknown":
+                section.append(f"  ! CHECK MANUALLY {p} {s}: may or may not have posted")
+            elif kind == "failed":
+                section.append(f"  x failed {p} {s}: {err}")
+            elif kind == "dropped":
+                section.append(f"  - dropped {p} {s}: {err}")
+        posted = Counter(e.get("platform", "?") for e in today if e.get("event") == "published")
+        dry = Counter(e.get("platform", "?") for e in today if e.get("event") == "dry_run")
         for p in sorted(set(posted) | set(dry)):
             bits = [f"{posted[p]} posted"] if posted[p] else []
             bits += [f"{dry[p]} dry-run"] if dry[p] else []
-            lines.append(f"  {p}: {', '.join(bits)}")
-        for e in today:
-            if e["event"] == "published":
-                lines.append(f"  + {e['platform']} {e.get('url', '')}")
-        for e in today:
-            if e["event"] == "unknown":
-                lines.append(f"  ! CHECK MANUALLY {e['platform']} {e['slot_id']}: may or may not have posted")
-            elif e["event"] == "failed":
-                lines.append(f"  x failed {e['platform']} {e['slot_id']}: {e.get('error', '')}")
-            elif e["event"] == "dropped":
-                lines.append(f"  - dropped {e['platform']} {e['slot_id']}: {e.get('error', '')}")
-        if data.get("paused"):
-            lines.append(f"  AUTO-PAUSED: {', '.join(sorted(data['paused']))} (set resume_after in app.yaml)")
-        if len(lines) == 2:
-            lines.append("  nothing today")
+            section.insert(0, f"  {p}: {', '.join(bits)}")
+        lines += [f"\n{slug}"] + (section or ["  nothing today"])
+        links += [f"  + {slug} {e.get('platform', '?')} {e.get('url', '')}" for e in today if e.get("event") == "published"]
     text = "\n".join(lines)
-    return text if len(text) <= LIMIT else text[: LIMIT - 20] + "\n...(truncated)"
+    if len(text) > LIMIT:
+        return text[: LIMIT - 20] + "\n...(truncated)"
+    if not links:
+        return text
+    text += "\n\nPosts"
+    for i, link in enumerate(links):
+        note = f"\n  ({len(links) - i} post links omitted)"
+        last = i == len(links) - 1
+        if len(text) + 1 + len(link) + (0 if last else len(note)) > LIMIT:
+            return text + note if len(text) + len(note) <= LIMIT else text
+        text += "\n" + link
+    return text
 
 
 def send(text: str, *, http=requests) -> None:

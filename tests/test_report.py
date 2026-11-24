@@ -36,6 +36,20 @@ def test_report_truncates_to_4096():
     assert len(build_report({"a": {"events": events, "paused": set()}}, DAY)) <= 4096
 
 
+def test_warnings_survive_truncation():
+    events = [ev("published", slot=f"2026-12-05#{i}", url="https://ig/" + "x" * 200) for i in range(40)]
+    events += [ev("unknown", slot="2026-12-05#99")]
+    text = build_report({"a": {"events": events, "paused": {"facebook"}}}, DAY)
+    assert len(text) <= 4096 and "CHECK MANUALLY" in text and "AUTO-PAUSED" in text and "omitted" in text
+
+
+def test_malformed_events_do_not_break_report():
+    events = [{"ts": None}, {"event": "published"}, {"ts": "nonsense", "event": "failed"},
+              ev("published", url="https://ig/1"), "not a dict"]
+    text = build_report({"a": {"events": events, "paused": set()}}, DAY)
+    assert "instagram: 1 posted" in text
+
+
 def test_default_day_covers_cron_in_winter_and_summer():
     from datetime import datetime, timezone
 
