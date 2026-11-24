@@ -5,6 +5,7 @@ bottom 20% and right 12%). Roast lines come from the content item verbatim, neve
 """
 import html
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -208,8 +209,17 @@ def stage_assets(*, broll: Path | None, music: Path | None, clip: Path | None, i
     return srcs, files
 
 
+_SECRETISH = re.compile(r"KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL", re.I)
+
+
+def _clean_env() -> dict[str, str]:
+    """npx pulls third-party code: it never sees our secrets."""
+    return {k: v for k, v in os.environ.items() if k != "ENGINE_SECRETS" and not _SECRETISH.search(k)}
+
+
 def _run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          env=_clean_env())
 
 
 def render(html_: str, files: dict[str, Path], workdir: Path, out: Path, version: str) -> Path:

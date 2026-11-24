@@ -195,6 +195,74 @@ def test_clip_path_outside_app_dir_dropped(root):
     assert c.rendered == [] and any("outside" in e.get("error", "") for e in ledger(root) if e["event"] == "dropped")
 
 
+def test_publishing_checkpoint_runs_before_publish_and_blocks_on_failure(root):
+    c = Calls()
+    order = []
+
+    def checkpoint():
+        events = ledger(root)
+        order.append(("checkpoint", events[-1]["event"]))
+        raise RuntimeError("push rejected")
+
+    deps = fake_deps(root, c)
+    deps.checkpoint = checkpoint
+    run(root, NOW, deps=deps, dry_run=False)
+    assert c.published == [] and order and all(ev == "publishing" for _, ev in order)
+    finals = [e for e in ledger(root) if e.get("platform") == "instagram"]
+    assert [e["event"] for e in finals] == ["publishing", "failed"] and "not saved" in finals[-1]["error"]
+
+
+def test_exact_caption_repeat_is_seen_by_duplicate_check(root):
+    seen = {}
+    c = Calls()
+    deps = fake_deps(root, c)
+    inner = deps.write_copy
+
+    def spy(plan, recipe, app, content, llm, recent_caps):
+        seen.setdefault("recent", recent_caps)
+        return inner(plan, recipe, app, content, llm, recent_caps)
+
+    run(root, NOW, deps=deps, dry_run=False)
+    deps2 = fake_deps(root, c)
+    deps2.write_copy = lambda *a: (seen.update(recent=a[5]), inner(*a))[1]
+    run(root, datetime(2026, 12, 5, 12, 5, tzinfo=NY), deps=deps2, dry_run=False)
+    assert "cap 2026-12-05#0" in seen["recent"]  # bare caption, no hashtags appended
+
+
+def test_naive_resume_after_is_treated_as_utc(root):
+    c = Calls()
+    cfg = root / "apps" / "demo" / "app.yaml"
+    a = yaml.safe_load(cfg.read_text())
+    a["platforms"]["instagram"]["resume_after"] = datetime(2026, 12, 1, 0, 0)  # naive, as YAML would give
+    cfg.write_text(yaml.safe_dump(a))
+    append(root / "state" / "demo" / "ledger.jsonl", {"ts": "2026-12-02T12:00:00+00:00", "app": "demo",
+           "slot_id": "2026-12-02#0", "platform": "instagram", "event": "published"})
+    run(root, NOW, deps=fake_deps(root, c), dry_run=False)
+    assert "instagram" in c.published
+
+
+def test_planner_error_drops_slot_and_later_slots_continue(root, monkeypatch):
+    import engine.main as m
+    real = m.plan_slot
+    calls = {"n": 0}
+
+    def flaky(*a, **k):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise ValueError("empty pool")
+        return real(*a, **k)
+
+    monkeypatch.setattr(m, "plan_slot", flaky)
+    a = yaml.safe_load((root / "apps/demo/app.yaml").read_text())
+    a["post_times"] = ["08:00", "08:20", "08:40"]
+    (root / "apps/demo/app.yaml").write_text(yaml.safe_dump(a))
+    c = Calls()
+    run(root, datetime(2026, 12, 5, 8, 45, tzinfo=NY), deps=fake_deps(root, c), dry_run=False)
+    events = ledger(root)
+    assert any(e["event"] == "dropped" and e["slot_id"] == "2026-12-05#0" for e in events)
+    assert any(e["event"] == "published" and e["slot_id"] == "2026-12-05#1" for e in events)
+
+
 def test_pause_file_stops_everything(root):
     (root / "PAUSE").write_text("")
     c = Calls()

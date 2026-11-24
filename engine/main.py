@@ -42,6 +42,9 @@ class Deps:
     publishers: dict[str, Callable]
     rng: random.Random
     write_copy: Callable = field(default=copywriter.write_copy)
+    # Called after each `publishing` line is written; in CI it commits + pushes the ledger. If it raises,
+    # the post is NOT made: a post the ledger can't remember would be re-posted by the next run.
+    checkpoint: Callable[[], None] = field(default=lambda: None)
 
 
 def ledger_path(root: Path, slug: str) -> Path:
@@ -58,6 +61,8 @@ def paused_platforms(app: dict, events: list[dict]) -> set[str]:
     for name, p in (app.get("platforms") or {}).items():
         since = p.get("resume_after")
         since = datetime.fromisoformat(str(since)) if since else None
+        if since and since.tzinfo is None:  # unquoted YAML timestamps come back naive: read them as UTC
+            since = since.replace(tzinfo=timezone.utc)
         finals = [e["event"] for e in events if e.get("platform") == name and e.get("event") in FINAL
                   and (since is None or _ts(e) > since)]
         if len(finals) >= 2 and all(f in ("failed", "unknown") for f in finals[-2:]):
@@ -105,7 +110,7 @@ def render_slot(root, app, slot, recipes, events, deps, out, on_planned=lambda p
     recipe = next(r for r in recipes if r["id"] == plan.recipe_id)
     on_planned(plan)
     content = _item(app, recipe["content"], plan.content_id)
-    copy = deps.write_copy(plan, recipe, app, content, deps.llm, recent(events, "caption", 200))
+    copy = deps.write_copy(plan, recipe, app, content, deps.llm, recent(events, "caption_text", 200))
     broll = None
     if any(b.get("bg") == "broll" for b in recipe["beats"]):
         keywords = yaml.safe_load((Path(app["dir"]) / "copy" / "keywords.yaml").read_text(encoding="utf-8"))
@@ -147,8 +152,9 @@ def _run_app(root, app, now, deps, dry_run, hard, late) -> list[dict]:
 
         def drop(reason: str):
             for p in plats:
+                plan = planned.get("plan")
                 log_event(slot_id=slot.slot_id, platform=p, event="dropped",
-                          recipe=planned["plan"].recipe_id, error=reason[:300])
+                          recipe=plan.recipe_id if plan else None, error=reason[:300])
 
         out = root / "out" / slug / f"{slot.slot_id.replace('#', '_')}.mp4"
         try:
@@ -162,11 +168,17 @@ def _run_app(root, app, now, deps, dry_run, hard, late) -> list[dict]:
         caption = f"{copy.caption}\n\n{' '.join(copywriter._tag(t) for t in copy.hashtags)}"
         for p in plats:
             base = {"slot_id": slot.slot_id, "platform": p, "recipe": plan.recipe_id, "combo": plan.combo,
-                    "caption": caption}
+                    "caption": caption, "caption_text": copy.caption}
             if dry_run:
                 log_event(**base, event="dry_run", video=str(video))
                 continue
             log_event(**base, event="publishing")  # on disk before the network call
+            try:
+                deps.checkpoint()  # ...and pushed, so a later run can't miss it
+            except Exception as e:  # noqa: BLE001
+                log_event(**base, event="failed", retryable=False,
+                          error=f"ledger not saved ({type(e).__name__}); post skipped to avoid a double post")
+                continue
             try:
                 res = deps.publishers[p](video, caption, app)
                 log_event(**base, event="published", post_id=res.post_id, url=res.url)
@@ -188,8 +200,11 @@ def real_deps(root: Path) -> Deps:
         html = r.build_html(recipe, copy, content, app, srcs)
         return r.render(html, files, Path(root) / "cache" / "render" / app["slug"], out, cfg["renderer"]["version"])
 
+    from engine import gitsync
+    checkpoint = (lambda: gitsync.checkpoint(root)) if os.environ.get("LEDGER_PUSH") == "1" else (lambda: None)
     return Deps(llm=llm.get(cfg["llm"]), broll=broll.get(cfg["broll"]), music=music.get(cfg["music"]),
-                render=render, publishers={p: publishers.get(p) for p in cfg["publishers"]}, rng=random.Random())
+                render=render, publishers={p: publishers.get(p) for p in cfg["publishers"]}, rng=random.Random(),
+                checkpoint=checkpoint)
 
 
 def main(argv=None) -> int:

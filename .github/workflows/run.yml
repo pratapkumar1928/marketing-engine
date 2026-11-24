@@ -25,7 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
+      # ref = the branch, so a run that waited in the concurrency queue still starts from the newest ledger
+      # (the default, github.sha, is fixed when the run is queued and can miss the previous run's posts)
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
@@ -37,23 +41,30 @@ jobs:
         run: |
           pip install .
           command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+      - name: Git identity
+        run: |
+          git config user.name "engine-bot"
+          git config user.email "engine-bot@users.noreply.github.com"
       - name: Run engine
         env:
           ENGINE_SECRETS: ${{ toJSON(secrets) }}
           DRY_RUN: ${{ inputs.dry_run || vars.DRY_RUN || '1' }}
           HYPERFRAMES_BROWSER_PATH: /usr/bin/google-chrome
           NOW: ${{ inputs.now }}
+          LEDGER_PUSH: "1"  # each `publishing` line is pushed before its post; a failed push skips the post
+          LEDGER_BRANCH: ${{ github.ref_name }}
         run: python -m engine.main run ${NOW:+--now "$NOW"}
+      # A manual test that overrides DRY_RUN or the time must not mark real slots as used.
       - name: Commit ledger
-        if: always()
+        if: >-
+          always() && (github.event_name == 'schedule' ||
+          (inputs.now == '' && inputs.dry_run == (vars.DRY_RUN || '1')))
         run: |
-          git config user.name "engine-bot"
-          git config user.email "engine-bot@users.noreply.github.com"
           git add state
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "ledger: $(date -u +%FT%RZ)"
-          git pull --rebase
-          git push
+          git pull --rebase origin "${{ github.ref_name }}"
+          git push origin "HEAD:${{ github.ref_name }}"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:

@@ -1,4 +1,6 @@
 * text=auto eol=lf
+# append-only logs: concurrent appends from two runs merge by keeping both sides' lines
+state/**/ledger.jsonl merge=union
 *.mp4 binary
 *.mp3 binary
 *.png binary

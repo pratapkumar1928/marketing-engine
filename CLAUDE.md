@@ -11,6 +11,15 @@ Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (co
   daily report says "CHECK MANUALLY". Don't add auto-retry for post-creating calls (`creates_post=True` in
   `publishers/meta_http.call`): only `ConnectTimeout` / 429 count as retryable there, and even those are
   not retried in the same run.
+- **In CI the `publishing` line is also pushed before the post** (`Deps.checkpoint` → `engine/gitsync.py`,
+  on when `LEDGER_PUSH=1`). If the push fails, the post is skipped and logged `failed`: a post the remote
+  ledger doesn't know about would be re-posted by the next run, whose checkout comes from the remote.
+- `run.yml` checks out `ref: github.ref_name` (the branch tip), not the queued `github.sha`: a run that waited
+  in the concurrency queue must see the previous run's ledger. `state/**/ledger.jsonl` merges by `union`.
+- A manual dispatch that overrides `dry_run` or `now` does not commit the ledger, so tests never use up real slots.
+- Duplicate-caption checks compare `caption_text` (no hashtags), not `caption`.
+- The renderer's `npx` subprocess gets an environment with `ENGINE_SECRETS` and every `*KEY*/*TOKEN*/*SECRET*`
+  variable removed: it runs third-party npm code.
 - **A slot is planned, dropped or posted at most once.** A dropped slot (copy rejected, render failed) is
   logged per platform so later runs don't retry it.
 - **Missed slots are skipped, never burst-posted** (`late_skip_minutes`, 120).

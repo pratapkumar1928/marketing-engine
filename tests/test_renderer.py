@@ -90,6 +90,24 @@ def test_stage_assets_maps_only_present_files(tmp_path):
     assert set(files) == {"broll.mp4", "icon.png"}
 
 
+def test_subprocess_env_has_no_secrets(monkeypatch):
+    from engine.renderer import hyperframes as hf
+    monkeypatch.setenv("ENGINE_SECRETS", '{"X":"y"}')
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.setenv("SCROLLSMACK_META_PAGE_TOKEN", "t")
+    seen = {}
+
+    def fake_run(cmd, **kw):
+        seen.update(kw)
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(hf.subprocess, "run", fake_run)
+    hf._run(["npx", "x"], Path("."))
+    env = seen["env"]
+    assert "ENGINE_SECRETS" not in env and "GEMINI_API_KEY" not in env and "SCROLLSMACK_META_PAGE_TOKEN" not in env
+    assert "PATH" in env or "Path" in env
+
+
 @pytest.mark.slow
 def test_real_render_each_seed(tmp_path):
     from engine.music.synth import make_track
