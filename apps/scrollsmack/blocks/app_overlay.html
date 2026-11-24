@@ -1,0 +1,31 @@
+<!-- ScrollSmack roast overlay, rebuilt from the real app (scrollsmack/store/promo-pov). Copy is filled verbatim.
+     Placeholders: {{persona}} {{headline}} {{subtitle}} {{headline_size}} {{t}} (beat start, seconds).
+     Panel sits inside the safe zone: x 70..940, top 300. -->
+<style>
+  #ov-panel { position: absolute; left: 70px; top: 300px; width: 870px; padding-bottom: 44px; background: #000; border: 6px solid #ff2d2d; }
+  #ov-head { height: 140px; background: #ffd400; display: flex; align-items: center; padding: 0 26px; gap: 18px; }
+  #ov-head .ov { flex: 1; color: #000; font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 30px; letter-spacing: 3px; }
+  #ov-chip { flex: 1; background: #000; border-radius: 10px; padding: 14px 20px; font-family: "JetBrains Mono", monospace; font-size: 25px; font-weight: 700; letter-spacing: 3px; line-height: 1.35; color: #ffd400; text-transform: uppercase; }
+  #ov-h { display: block; margin: 64px 44px 0; color: #ff2d2d; text-align: center; text-transform: uppercase; font-family: "Archivo Black", sans-serif; line-height: 1.14; letter-spacing: -1px; }
+  #ov-s { display: block; margin: 36px 54px 0; font-size: 34px; line-height: 1.4; color: #b5b5b5; text-align: center; text-transform: uppercase; }
+  #ov-type { margin: 54px 54px 0; font-family: "JetBrains Mono", monospace; font-size: 26px; font-weight: 700; letter-spacing: 2px; text-align: center; line-height: 1.5; color: #fff; }
+  #ov-type .red { color: #ff2d2d; }
+  #ov-field { margin: 28px 54px 0; height: 90px; border: 3px solid #ff2d2d; padding: 0 24px; display: flex; align-items: center; font-family: "JetBrains Mono", monospace; font-size: 34px; color: #fff; }
+  #caret { color: #ff2d2d; }
+</style>
+<div id="ov-panel" class="txt" style="left:70px;top:300px">
+  <div id="ov-head"><div class="ov">&#9888; SYSTEM OVERRIDE</div><div id="ov-chip">PERSONA: {{persona}}</div></div>
+  <span id="ov-h" style="font-size:{{headline_size}}px">{{headline}}</span>
+  <span id="ov-s">{{subtitle}}</span>
+  <div id="ov-type">TYPE PHRASE TO UNLOCK: <span class="red">I AM WASTING MY TIME</span></div>
+  <div id="ov-field"><span id="typed"></span><span id="caret">|</span></div>
+</div>
+<script data-timeline>
+  tl.fromTo("#ov-panel", { opacity: 0, scale: 1.3 }, { opacity: 1, scale: 1, duration: 0.16, ease: "power4.in" }, {{t}});
+  shake("#ov-panel", {{t}} + 0.16, 34);
+  tl.fromTo("#ov-type", { opacity: 0 }, { opacity: 1, duration: 0.3 }, {{t}} + 0.7);
+  tl.call(() => (document.getElementById("typed").textContent = ""), null, {{t}} + 1.55);
+  (() => { const phrase = "I am wasting my time";
+    for (let i = 1; i <= phrase.length; i++)
+      tl.call(() => (document.getElementById("typed").textContent = phrase.slice(0, i)), null, {{t}} + 1.6 + i * 0.07); })();
+</script>

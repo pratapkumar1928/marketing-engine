@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ScrollSmack</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">Time to face the truth.</string>
+    <string name="onboarding_subtitle">ScrollSmack watches your doomscrolling and smacks you out of the trance. It needs a few permissions to do its job. No data ever leaves your phone.</string>
+
+    <string name="perm_usage_title">Usage access</string>
+    <string name="perm_usage_why">This is how we know which app is on your screen and for how long. Without it, we\'re blind.</string>
+    <string name="perm_overlay_title">Display over other apps</string>
+    <string name="perm_overlay_why">The Roast has to appear on top of the app you\'re wasting time in. That\'s the whole point.</string>
+    <string name="perm_notif_title">Notifications</string>
+    <string name="perm_notif_why">Android requires a persistent notification while tracking runs. It\'s quiet and stays out of your way.</string>
+    <string name="perm_battery_title">Ignore battery optimization</string>
+    <string name="perm_battery_why">Some phones kill background apps to save battery. Exempt ScrollSmack so tracking survives while you scroll.</string>
+
+    <string name="perm_required_badge">Required</string>
+    <string name="perm_recommended_badge">Recommended</string>
+    <string name="action_grant">Grant</string>
+    <string name="status_granted">Granted</string>
+    <string name="action_continue">Let\'s go</string>
+    <string name="onboarding_continue_hint">Grant the required permissions above to continue.</string>
+
+    <!-- Tracking service notification -->
+    <string name="notif_channel_name">Tracking</string>
+    <string name="notif_title">ScrollSmack is watching.</string>
+    <string name="notif_body">Scroll if you dare.</string>
+    <string name="notif_paused_title">ScrollSmack is paused.</string>
+    <string name="notif_paused_body">Paused until %1$s. Tap to resume early.</string>
+    <string name="reminder_channel_name">Reminders</string>
+    <string name="reminder_day1">ScrollSmack\'s been off for a day. Your thumbs noticed.</string>
+    <string name="reminder_day3">Three days unsupervised. Grandma is getting worried.</string>
+    <string name="reminder_day7">A week off. Last reminder — we\'ll stop asking.</string>
+    <string name="disarm_sheet_title">Disarm for how long?</string>
+    <string name="disarm_pause_hour">Pause 1 hour</string>
+    <string name="disarm_pause_hour_sub">Back on automatically at %1$s</string>
+    <string name="disarm_pause_morning">Pause until 7 AM</string>
+    <string name="disarm_pause_morning_sub">Evening off · back on at %1$s</string>
+    <string name="disarm_off">Turn off</string>
+    <string name="disarm_off_sub">Until you arm again · reminders at 1d / 3d / 7d</string>
+    <string name="action_resume">Resume now</string>
+    <string name="home_tracking_paused">PAUSED</string>
+    <string name="session_paused_until">UNTIL %1$s</string>
+
+    <!-- Home -->
+    <string name="home_title">SCROLLSMACK</string>
+    <string name="home_tracking_on">ARMED</string>
+    <string name="home_tracking_off">STANDBY</string>
+    <string name="session_idle">--:--</string>
+    <string name="session_of_limit">LIMIT %1$s</string>
+    <string name="home_watching_label">Target entities</string>
+    <string name="home_no_apps">No apps selected</string>
+    <string name="action_arm">Arm system</string>
+    <string name="action_disarm">Disarm system</string>
+    <string name="home_limit_label">Continuous limit</string>
+    <string name="limit_minutes_chip">%1$d MIN</string>
+    <string name="home_tracked_apps_label">Tracked apps</string>
+    <string name="home_tracked_apps_count">%1$d apps being watched</string>
+    <string name="home_app_active_badge">ACTIVE</string>
+    <string name="action_edit">+ Edit targets</string>
+    <string name="home_status_label">System status</string>
+    <string name="battery_warning_title">Your phone may kill the tracker.</string>
+    <string name="battery_warning_body">Battery optimization is still on for ScrollSmack. Exempt it or the OS will silently stop tracking.</string>
+    <string name="action_fix_battery">Fix it</string>
+    <!-- Manufacturer-specific directions, shown inside the battery card and onboarding
+         step 4 only while the app is NOT yet exempt. The primary button always fires the
+         system 1-tap Allow prompt (Permissions.openBatterySettings); battery_hint_more is
+         the secondary step (OemBattery.openOemAutoStart): the vendor auto-start screen on
+         vivo/OPPO/Xiaomi/Huawei, else the dontkillmyapp.com guide. -->
+    <string name="battery_hint_samsung">Samsung: Tap Allow in the prompt. If tracking stops later, open Settings → Apps → ScrollSmack → Battery → Unrestricted, and keep ScrollSmack off the Sleeping apps list.</string>
+    <string name="battery_hint_vivo">vivo / iQOO: Tap Allow in the prompt. If tracking stops later, open Settings → Battery → Background power consumption management → ScrollSmack → allow, and enable Autostart.</string>
+    <string name="battery_hint_xiaomi">Xiaomi / Redmi / POCO: Tap Allow in the prompt. If tracking stops later, open Settings → Apps → Manage apps → ScrollSmack → set Battery saver to No restrictions, and turn on Autostart.</string>
+    <string name="battery_hint_oppo">OPPO: Tap Allow in the prompt. If tracking stops later, open Settings → Battery → ScrollSmack → allow Background running, and enable Auto-launch.</string>
+    <string name="battery_hint_realme">realme: Tap Allow in the prompt. If tracking stops later, open Settings → Battery → ScrollSmack → allow Background running, and enable Auto-launch.</string>
+    <string name="battery_hint_oneplus">OnePlus: Tap Allow in the prompt. If tracking stops later, open Settings → Apps → ScrollSmack → Battery → Unrestricted, and turn off any deep optimization restrictions.</string>
+    <string name="battery_hint_huawei">Huawei: Tap Allow in the prompt. If tracking stops later, open Settings → Apps → ScrollSmack → App launch → Manage manually → allow Auto-launch and Run in background.</string>
+    <string name="battery_hint_honor">Honor: Tap Allow in the prompt. If tracking stops later, open Settings → Apps → ScrollSmack → App launch → Manage manually → allow Auto-launch and Run in background.</string>
+    <string name="battery_hint_motorola">Motorola: Tap Allow in the prompt. If tracking stops later, open Settings → Apps → ScrollSmack → App battery usage → Unrestricted.</string>
+    <string name="battery_hint_generic">Tap Allow in the prompt. If tracking stops later, open Settings → Apps → ScrollSmack → Battery → Unrestricted (or "Don\'t optimize"), and allow ScrollSmack in any Auto-start or background-manager screen.</string>
+    <string name="battery_hint_more">Still getting stopped? Open the fix for your phone →</string>
+
+    <!-- App picker -->
+    <string name="picker_title">Pick your poison</string>
+    <string name="picker_overline">Choose target entities</string>
+    <string name="picker_subtitle">Apps you select get watched. Cross the limit and you get roasted.</string>
+    <string name="action_back">← Back</string>
+
+    <!-- Roast overlay -->
+    <string name="persona_standard">The Voice</string>
+    <string name="persona_ex">The Petty Ex</string>
+    <string name="persona_grandma">The Grandma</string>
+    <string name="persona_court_partner">The Court Partner</string>
+    <string name="persona_mom">The Disappointed Mom</string>
+    <string name="persona_gym_bro">The Gym Bro</string>
+    <string name="persona_narrator">The Nature Narrator</string>
+    <string name="persona_bestie">The Sassy Best Friend</string>
+    <!-- Stitch layout (2026-08-14): each persona's punchline is now a short
+         poster headline; the original one-liner moves to the subtitle below
+         it. Headline arrays are index-paired with their subtitle array —
+         RoastOverlayScreen picks one shared random index for both. -->
+    <string-array name="roast_standard_headline">
+        <item>Put the phone down</item>
+        <item>Good doggy</item>
+        <item>Still here?</item>
+        <item>Achievement: vegetable</item>
+        <item>Nothing new happened</item>
+    </string-array>
+    <string-array name="roast_standard">
+        <item>Hey genius, your thumb has been going brrr for a while now.</item>
+        <item>Breaking news: you have officially become the algorithm\'s pet.</item>
+        <item>This app is not going anywhere. Neither, apparently, are you.</item>
+        <item>Congratulations. You have reached a state usually reserved for houseplants.</item>
+        <item>Not in the last 40 scrolls. Not in the 40 before those either.</item>
+    </string-array>
+    <string-array name="roast_ex_headline">
+        <item>You never look at me like that</item>
+        <item>So you do have your phone</item>
+        <item>New profile picture?</item>
+        <item>I\'m not jealous</item>
+        <item>We had plans</item>
+    </string-array>
+    <string-array name="roast_ex">
+        <item>Hours of eye contact with a screen. I got fourteen seconds, once.</item>
+        <item>Fascinating. It works. It\'s been working this entire time.</item>
+        <item>You\'ve seen everyone else\'s twice. Nobody has seen you leave that couch.</item>
+        <item>I\'m just noting that an algorithm gets more of you than anyone alive does.</item>
+        <item>You had plans. The phone had other ideas, and the phone won again.</item>
+    </string-array>
+    <string-array name="roast_grandma_headline">
+        <item>In my day</item>
+        <item>Sit up straight</item>
+        <item>Is that the tiny television?</item>
+        <item>You\'ll ruin your eyes</item>
+        <item>Come help me with something</item>
+    </string-array>
+    <string-array name="roast_grandma">
+        <item>We were bored too. We just called it \"an afternoon\" and went outside.</item>
+        <item>You\'ve been curled over that thing like a question mark for an hour.</item>
+        <item>It\'s been on longer than my stories, and mine at least had an ending.</item>
+        <item>I said that about the television and I was right about that too.</item>
+        <item>Anything. Peel a potato. Those hands have done nothing but swipe all day.</item>
+    </string-array>
+    <string-array name="roast_court_partner_headline">
+        <item>Zero hustle</item>
+        <item>That\'s a turnover</item>
+        <item>Substitute yourself</item>
+        <item>Airball</item>
+        <item>Timeout\'s over</item>
+    </string-array>
+    <string-array name="roast_court_partner">
+        <item>You\'re getting completely dinked on by the algorithm right now.</item>
+        <item>The other team is your own free will.</item>
+        <item>You\'ve been posted up on this couch for a full quarter.</item>
+        <item>That\'s what your willpower just shot from half court.</item>
+        <item>Get off the bench and back in your actual life.</item>
+    </string-array>
+    <string-array name="roast_mom_headline">
+        <item>I\'m not mad</item>
+        <item>Did you eat?</item>
+        <item>Everyone\'s asking</item>
+        <item>Your room is a mess</item>
+        <item>Call your mother</item>
+    </string-array>
+    <string-array name="roast_mom">
+        <item>I\'m just disappointed. Your cousin got a promotion, by the way.</item>
+        <item>Hours of this and nothing but coffee. I raised you better than that.</item>
+        <item>They want to know what you\'ve been up to. I\'m not telling them it was this.</item>
+        <item>So is your attention span. One of those I used to clean up for you.</item>
+        <item>She\'s staring at her phone too, waiting. Difference is, she\'s waiting for you.</item>
+    </string-array>
+    <string-array name="roast_gym_bro_headline">
+        <item>Zero reps today</item>
+        <item>That\'s not a rest day</item>
+        <item>Where\'s the intensity</item>
+        <item>Standing is free</item>
+        <item>No excuses</item>
+    </string-array>
+    <string-array name="roast_gym_bro">
+        <item>Your thumb is the only muscle that\'s seen a workout today.</item>
+        <item>A rest day has an end. This is retirement.</item>
+        <item>You had some. You spent it watching other people have theirs.</item>
+        <item>You\'ve been sitting so long your legs have filed a complaint.</item>
+        <item>Except the seventeen you\'ve made since you picked this thing up.</item>
+    </string-array>
+    <string-array name="roast_narrator_headline">
+        <item>The creature rests</item>
+        <item>It has not blinked</item>
+        <item>Feeding time approaches</item>
+        <item>A curious ritual</item>
+        <item>The herd moved on</item>
+    </string-array>
+    <string-array name="roast_narrator">
+        <item>Here we observe the human in its natural habitat, motionless, bathed in blue light.</item>
+        <item>Four minutes now. The species has adapted to survive without moisture.</item>
+        <item>Yet the specimen does not move. Hunger will lose to the algorithm again.</item>
+        <item>The thumb travels the distance of a small country. The body goes nowhere.</item>
+        <item>Our subject remains, alone, illuminated, convinced it is still part of something.</item>
+    </string-array>
+    <string-array name="roast_bestie_headline">
+        <item>We need to talk</item>
+        <item>Put it down</item>
+        <item>This is a cry for help</item>
+        <item>You\'re not even enjoying it</item>
+        <item>Be honest with me</item>
+    </string-array>
+    <string-array name="roast_bestie">
+        <item>You said \"five minutes\" an hour ago. I\'ve been sitting here since.</item>
+        <item>You\'ve watched the same three videos twice. I\'m calling it, as your friend.</item>
+        <item>And I\'m answering it, because clearly nobody else is going to.</item>
+        <item>I\'ve been watching your face. That\'s not a smile, that\'s a screensaver.</item>
+        <item>What did you actually see in the last twenty minutes? Name one thing.</item>
+    </string-array>
+    <string name="dismiss_phrase">I am wasting my time</string>
+    <string name="dismiss_instruction_label">Type phrase to unlock:</string>
+    <string name="dismiss_placeholder">Enter phrase exactly…</string>
+    <string name="action_dismiss">Dismiss</string>
+
+    <!-- Identity chrome -->
+    <string name="step_number_format">%1$02d</string>
+    <string name="persona_tag">Persona: %1$s</string>
+    <string name="overlay_system_override">System Override</string>
+</resources>

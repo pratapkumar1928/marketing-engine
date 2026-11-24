@@ -1,0 +1,14 @@
+# The ONLY claims AI copy may make about ScrollSmack. Source: scrollsmack/CLAUDE.md + Play listing.
+# The first fact is shown on every end card.
+- {id: free_android, text: "Free on Google Play. Android only."}
+- {id: no_internet, text: "ScrollSmack has no internet permission. It cannot send anything anywhere."}
+- {id: no_account, text: "No account, no sign-up, no login."}
+- {id: stays_on_phone, text: "Nothing leaves your phone. Backup is turned off, so not even your settings get copied."}
+- {id: eight_personas, text: "Eight roast personas: The Voice, The Petty Ex, The Grandma, The Court Partner, The Disappointed Mom, The Gym Bro, The Nature Narrator and The Sassy Best Friend."}
+- {id: typed_phrase, text: "To keep scrolling past your limit you have to type \"I am wasting my time\"."}
+- {id: pick_apps, text: "You pick which apps it watches."}
+- {id: own_limit, text: "You set your own continuous-use limit."}
+- {id: roast_overlay, text: "Go over your limit and a full-screen roast covers the app."}
+- {id: yields, text: "Leave the app and the roast gets out of the way, so you can still take calls."}
+- {id: pause, text: "You can pause it for an hour or until 7 AM."}
+- {id: back_blocked, text: "The back button won't get you out of a roast. Only the typed phrase does."}

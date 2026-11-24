@@ -1,0 +1,15 @@
+# Raw clips (no burned-in captions or end cards). dur = seconds. floor: true = fade the bottom (Veo burned fake subtitles there).
+- {id: persona_grandma, file: persona_grandma.mp4, dur: 8.0, desc: "Animated grandma catches someone doomscrolling and roasts them, family-film style"}
+- {id: persona_mom, file: persona_mom.mp4, dur: 8.0, desc: "Animated disappointed mom catches her kid scrolling instead of eating"}
+- {id: persona_gym_bro, file: persona_gym_bro.mp4, dur: 8.0, desc: "Animated gym bro roasts someone whose only workout is thumb scrolling"}
+- {id: persona_narrator, file: persona_narrator.mp4, dur: 8.0, desc: "Nature-documentary narrator observes a human motionless on the couch with a phone"}
+- {id: persona_ex, file: persona_ex.mp4, dur: 8.0, desc: "Animated petty ex notices you do have your phone after all"}
+- {id: persona_bestie, file: persona_bestie.mp4, dur: 8.0, desc: "Animated sassy best friend calls out the 'five more minutes' that became an hour"}
+- {id: persona_court_partner, file: persona_court_partner.mp4, dur: 7.93, desc: "Animated sports teammate tells you timeout's over, get off the bench"}
+- {id: persona_standard, file: persona_standard.mp4, dur: 7.93, desc: "A TV news anchor voice declares you the algorithm's pet"}
+- {id: call_grandma, file: call_grandma.mp4, dur: 7.85, desc: "Photoreal selfie video call: grandma calls because you've been scrolling too long"}
+- {id: call_mom, file: call_mom.mp4, dur: 7.93, desc: "Photoreal selfie video call: mom calls, not mad, just on the phone"}
+- {id: call_ex, file: call_ex.mp4, dur: 7.93, desc: "Photoreal selfie video call: the ex you blocked calls anyway"}
+- {id: skit_chef, file: skit_chef.mp4, dur: 8.23, desc: "A cooking creator stops mid-recipe and calls out the viewer who never cooks"}
+- {id: skit_workout, file: skit_workout.mp4, dur: 8.53, desc: "A fitness creator stops mid-workout and calls out the viewer watching instead of doing"}
+- {id: skit_couple, file: skit_couple.mp4, dur: 7.93, desc: "A couple on the couch: she gets roasted and types the phrase, he laughs, then his phone goes red", floor: true}
