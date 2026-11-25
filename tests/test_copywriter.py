@@ -162,5 +162,19 @@ def test_hashtags_jammed_into_one_string_are_split(app):
     assert c.hashtags == ["#screentime", "#doomscrolling", "#androidapp"]
 
 
+def test_garbled_or_too_few_hashtags_are_repaired_from_the_list(app):
+    # the first CI run lost a video to this exact reply from Gemini
+    garbled = {**GOOD, "hashtags": ["#doomscrolling体现"]}
+    c = write_copy(PLAN, RECIPE, app, CONTENT, FakeLLM(garbled, OK_CLAIMS), [])
+    assert len(c.hashtags) == 3 and set(c.hashtags) <= set(TAGS)
+    assert write_copy(PLAN, RECIPE, app, CONTENT, FakeLLM(garbled, OK_CLAIMS), []).hashtags == c.hashtags  # per-slot seed
+
+
+def test_allowed_hashtags_from_the_model_are_kept_first(app):
+    mixed = {**GOOD, "hashtags": ["#phoneaddiction", "#viral", "#screentime", "#phoneaddiction"]}
+    c = write_copy(PLAN, RECIPE, app, CONTENT, FakeLLM(mixed, OK_CLAIMS), [])
+    assert c.hashtags[:2] == ["#phoneaddiction", "#screentime"] and len(c.hashtags) == 3 and "#viral" not in c.hashtags
+
+
 def test_check_claims_returns_unsupported(app):
     assert check_claims(mk(), ["No internet permission."], FakeLLM(BAD_CLAIMS)) == ["used by 1M people"]

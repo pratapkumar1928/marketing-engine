@@ -1,5 +1,6 @@
 """AI-written hooks/captions, gated by rule checks and an LLM claim checker. Two attempts, then CopyRejected."""
 import difflib
+import random
 import re
 import unicodedata
 from pathlib import Path
@@ -151,6 +152,15 @@ def _parse(raw: dict, keys: list[str]) -> tuple[Copy, list[str]]:
     return c, [f"missing line '{k}'" for k in missing] + ([] if hook else ["empty hook"])
 
 
+def fix_tags(tags: list[str], allowed: list[str], seed: str) -> list[str]:
+    """Tags only ever come from the app's list, so the model can't cost a video over them: keep its allowed
+    picks (in order, no repeats), drop anything else (e.g. "#doomscrolling体现"), top up to TAGS_MIN from the list."""
+    keep = list(dict.fromkeys(t for t in (_tag(x) for x in tags) if t in allowed))[:TAGS_MAX]
+    rest = [t for t in allowed if t not in keep]
+    random.Random(seed).shuffle(rest)
+    return keep + rest[:max(0, TAGS_MIN - len(keep))]
+
+
 def write_copy(plan: Plan, recipe: dict, app: dict, content: dict, llm, recent_captions: list[str]) -> Copy:
     keys = line_keys(recipe)
     facts = _facts(app)
@@ -172,6 +182,7 @@ def write_copy(plan: Plan, recipe: dict, app: dict, content: dict, llm, recent_c
         prompt = template.format_map({**base, "feedback": feedback})
         try:
             c, reasons = _parse(llm(prompt, COPY_SCHEMA), keys)
+            c.hashtags = fix_tags(c.hashtags, _hashtags(app), plan.slot.slot_id)
             reasons += validate_copy(c, app, recent_captions)
             if not reasons:
                 reasons = [f"unsupported claim: {x}" for x in check_claims(c, facts, llm)]
