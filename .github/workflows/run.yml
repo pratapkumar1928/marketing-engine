@@ -1,5 +1,6 @@
 name: run
 # Every 30 min: post any due slot for every app. Renders just in time, then commits the ledger.
+# GitHub registers a workflow when a push changes its file: if Actions lists none, touch this file.
 on:
   schedule:
     - cron: "*/30 * * * *"

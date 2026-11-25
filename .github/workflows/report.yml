@@ -1,5 +1,6 @@
 name: report
 # Daily Telegram summary: 23:30 ET in winter (00:30 in summer).
+# GitHub registers a workflow when a push changes its file: if Actions lists none, touch this file.
 on:
   schedule:
     - cron: "30 4 * * *"
