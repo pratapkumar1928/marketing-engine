@@ -62,6 +62,12 @@ code stays; to use it for another app, see git history of this file for the Page
    `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 5. Same page → **Variables**: `DRY_RUN` = `1`.
 
+Faster with the GitHub CLI (`gh auth login -h github.com -p https -w -s workflow` once): `gh secret set -f .env`
+uploads every `.env` line as a secret, and `gh variable set DRY_RUN --body 1`. Also set Actions → General →
+fork PR workflows to "Require approval for all outside collaborators" and workflow permissions to read-only.
+GitHub only registers workflows on a push that brings new commits: if Actions shows none (for example after
+renaming a branch to `main`), push or merge any new commit.
+
 ## 5. Test, then go live
 1. Actions → **run** → Run workflow with `dry_run=1`. Expect a green run, a ledger commit by `engine-bot`,
    and a `videos-…` artifact. Watch a couple of the MP4s. Let the schedule run in dry mode for 2 days.
