@@ -34,8 +34,9 @@ auto-pauses (set `platforms.tiktok.resume_after` in `app.yaml` to restart it).
    drafts, which we finish in the TikTok app".
 4. Put `TIKTOK_CLIENT_KEY` and `TIKTOK_CLIENT_SECRET` in `.env` and in GitHub secrets.
 5. `.venv/Scripts/python tools/tiktok_auth.py scrollsmack`. The first time it prints a `TIKTOK_TOKEN_KEY=…` line:
-   add it to `.env` **and** GitHub secrets, then run the tool again. Sign in as ScrollSmack, allow, paste back
-   the address you land on (the page itself may 404; only the address matters).
+   add it to `.env` **and** GitHub secrets, then run it again: it prints a sign-in link. Use the **sandbox** client
+   key (starts with `sb`); the production one is refused until TikTok approves the app. Sign in as ScrollSmack,
+   allow, then run `tools/tiktok_auth.py scrollsmack "<address you landed on>"` within a few minutes.
 6. Commit and push `state/scrollsmack/tiktok_token.enc` (encrypted). The bot refreshes and re-commits it.
    **Never run a live (`DRY_RUN=0`) post from your PC**: it would refresh the token locally and the bot's copy
    would stop working. If the report ever shows `tt token refresh failed`, redo steps 5–6.
