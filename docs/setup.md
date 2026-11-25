@@ -47,7 +47,8 @@ new account for it (Meta's terms forbid it, and a replacement risks your other M
 code stays; to use it for another app, see git history of this file for the Page + token steps.
 
 ## 3. Other keys (≈5 min)
-- **Pexels**: pexels.com/api → free key.
+- **Pixabay** (b-roll): sign up at pixabay.com → pixabay.com/api/docs/ shows your key under "Parameters → key"
+  once you're logged in. Free. (Pexels paused new keys; its provider is still there if you have one.)
 - **Gemini**: you already have one (`~/.claude/.env`).
 - **Telegram**: reuse the social-engine bot token and your chat id, or make a new bot with @BotFather.
 
@@ -56,7 +57,7 @@ code stays; to use it for another app, see git history of this file for the Page
 2. Push: `git remote add origin https://github.com/pratapkumar1928/marketing-engine.git && git push -u origin main`.
 3. Settings → Code security → enable **Secret scanning** and **Push protection**.
 4. Settings → Secrets and variables → Actions → **Secrets**, add:
-   `GEMINI_API_KEY`, `PEXELS_API_KEY`, `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`,
+   `GEMINI_API_KEY`, `PIXABAY_API_KEY`, `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET`,
    `SCROLLSMACK_YOUTUBE_REFRESH_TOKEN`, `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`, `TIKTOK_TOKEN_KEY`,
    `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
 5. Same page → **Variables**: `DRY_RUN` = `1`.

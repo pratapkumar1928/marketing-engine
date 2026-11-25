@@ -1,6 +1,6 @@
 # The switchboard: which provider fills each slot. Swap a provider = change a name here.
 llm: {provider: gemini, model: gemini-3.8-flash}   # same default as social-engine
-broll: {provider: pexels}
+broll: {provider: pixabay}   # pexels code kept; Pexels paused new API keys (Nov 2026)
 music: {provider: synth}
 renderer: {provider: hyperframes, version: "0.8.106"}
 publishers: [youtube, tiktok]   # instagram/facebook code kept; the ScrollSmack IG account was disabled 2026-11-21

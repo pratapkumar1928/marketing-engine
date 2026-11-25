@@ -31,8 +31,10 @@ Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (co
 - **Missed slots are skipped, never burst-posted** (`late_skip_minutes`, 120).
 - **The repo is public.** Secrets only in GitHub Actions secrets (`ENGINE_SECRETS` = `toJSON(secrets)`).
   No secret in any log, error or exception: every client re-raises `type(e).__name__` only, `from None`.
-  Tokens go in headers (`x-goog-api-key`, `Authorization: OAuth …`), never URLs, except Telegram's (path),
-  whose errors are swallowed the same way. `.env` is read only from the repo root and never on Actions.
+  Tokens go in headers (`x-goog-api-key`, `Authorization: OAuth …`), never URLs, except Telegram's (path) and
+  Pixabay's (query param, the only way it accepts one), whose errors are swallowed the same way.
+- B-roll is **Pixabay** (Pexels paused new API keys, Nov 2026). Pixabay has few portrait clips: it prefers them,
+  else takes the sharpest landscape one, which `object-fit: cover` crops to 9:16. `.env` is read only from the repo root and never on Actions.
 - Workflows: `schedule` + `workflow_dispatch` only. **Never `pull_request_target`.** Every `uses:` is pinned to a
   full SHA. Only `run.yml` has `contents: write` (ledger commit).
 - **Roast lines are verbatim from ScrollSmack's `strings.xml`** via `tools/sync_roasts.py` → `copy/roasts.yaml`.

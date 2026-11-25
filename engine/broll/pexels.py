@@ -20,6 +20,26 @@ def _pick_file(video: dict) -> dict | None:
     return min(hd, key=lambda f: f["height"]) if hd else max(portrait, key=lambda f: f["height"])
 
 
+def download(http, url: str, out: Path) -> Path:
+    """Fetch url into out (cached by name), capped at MAX_BYTES. Shared by the b-roll providers."""
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if not out.exists():
+        dl = http.get(url, stream=True, timeout=120)
+        dl.raise_for_status()
+        part, written = out.with_suffix(".part"), 0
+        try:
+            with open(part, "wb") as fh:
+                for chunk in dl.iter_content(chunk_size=1 << 16):
+                    written += len(chunk)
+                    if written > MAX_BYTES:
+                        raise ValueError("download too large")
+                    fh.write(chunk)
+            part.replace(out)
+        finally:
+            part.unlink(missing_ok=True)
+    return out
+
+
 def fetch(query: str, out_dir: Path, *, rng, http=requests, min_dur: float = 3.0) -> Path | None:
     try:
         key = secret("PEXELS_API_KEY")
@@ -38,24 +58,7 @@ def fetch(query: str, out_dir: Path, *, rng, http=requests, min_dur: float = 3.0
         link = urlparse(str(f["link"]))
         if link.scheme != "https" or not (link.hostname or "").endswith(".pexels.com"):
             raise ValueError("unexpected download host")
-        base = Path(out_dir).resolve()
-        out = base / f"pexels_{vid}_{h}.mp4"
-        out.parent.mkdir(parents=True, exist_ok=True)
-        if not out.exists():
-            dl = http.get(link.geturl(), stream=True, timeout=120)
-            dl.raise_for_status()
-            part, written = out.with_suffix(".part"), 0
-            try:
-                with open(part, "wb") as fh:
-                    for chunk in dl.iter_content(chunk_size=1 << 16):
-                        written += len(chunk)
-                        if written > MAX_BYTES:
-                            raise ValueError("download too large")
-                        fh.write(chunk)
-                part.replace(out)
-            finally:
-                part.unlink(missing_ok=True)
-        return out
+        return download(http, link.geturl(), Path(out_dir).resolve() / f"pexels_{vid}_{h}.mp4")
     except Exception as e:  # noqa: BLE001 - b-roll is optional; never echo the message (may carry the key)
         log.warning("pexels b-roll skipped: %s", type(e).__name__)
         return None

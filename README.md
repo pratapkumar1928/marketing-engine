@@ -25,7 +25,7 @@ state/<app>/ledger.jsonl   append-only post log (committed by the bot)
 | Slot | Contract | Today |
 |---|---|---|
 | `llm` | `engine/llm/<name>.py: generate(prompt, schema, *, model) -> dict` | `gemini` |
-| `broll` | `engine/broll/<name>.py: fetch(query, out_dir, *, rng) -> Path \| None` (never raises) | `pexels` |
+| `broll` | `engine/broll/<name>.py: fetch(query, out_dir, *, rng) -> Path \| None` (never raises) | `pixabay` (also `pexels`) |
 | `music` | `engine/music/<name>.py: make_track(seconds, out, *, seed) -> Path` | `synth` (original, no licence) |
 | `renderer` | `engine/renderer/<name>.py: stage_assets(...)`, `build_html(recipe, copy, content, app, srcs)`, `render(html, files, workdir, out, version)` | `hyperframes` |
 | `publishers` | `engine/publishers/<name>.py: publish(video, caption, app, *, http) -> Published` (raises `PublishError`) | `youtube`, `tiktok` (also `instagram`, `facebook`, off) |
