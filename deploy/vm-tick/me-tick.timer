@@ -1,0 +1,10 @@
+[Unit]
+Description=Tick the marketing engine every 30 min (GitHub's own cron is unreliable)
+
+[Timer]
+# :05/:35 so a tick lands just after each post slot (slots are on :00/:30 ET)
+OnCalendar=*-*-* *:05,35:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

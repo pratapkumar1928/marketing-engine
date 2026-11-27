@@ -3,7 +3,9 @@ name: run
 # GitHub registers a workflow when a push changes its file: if Actions lists none, touch this file.
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/30 * * * *"  # GitHub drops most of these on a quiet repo (~3/day seen), so:
+  repository_dispatch:  # the gridbot VM sends `tick` every 30 min (deploy/vm-tick/); behaves like schedule
+    types: [tick]
   workflow_dispatch:
     inputs:
       dry_run:
@@ -44,8 +46,8 @@ jobs:
           command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
       - name: Git identity
         run: |
-          git config user.name "engine-bot"
-          git config user.email "engine-bot@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Run engine
         env:
           ENGINE_SECRETS: ${{ toJSON(secrets) }}
@@ -59,7 +61,7 @@ jobs:
       # Real posts are always recorded: `--now` runs never post, and dry_run=0 dispatches do commit.
       - name: Commit ledger
         if: >-
-          always() && (github.event_name == 'schedule' ||
+          always() && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' ||
           (inputs.now == '' && !(inputs.dry_run == '1' && vars.DRY_RUN == '0')))
         env:
           BRANCH: ${{ github.ref_name }}

@@ -1,0 +1,12 @@
+[Unit]
+Description=marketing-engine: trigger the GitHub `run` workflow (repository_dispatch tick)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# GH_TOKEN = fine-grained PAT, this repo only, Contents: read and write (needed for repository_dispatch)
+EnvironmentFile=/etc/marketing-engine/tick.env
+ExecStart=/usr/bin/curl -fsS --max-time 30 -X POST \
+  -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+  -d '{"event_type":"tick"}' https://api.github.com/repos/pratapkumar1928/marketing-engine/dispatches
