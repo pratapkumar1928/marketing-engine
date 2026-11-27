@@ -35,8 +35,8 @@ Spec: `docs/superpowers/specs/2026-11-24-marketing-engine-design.md`. Plan 1 (co
   Pixabay's (query param, the only way it accepts one), whose errors are swallowed the same way.
 - B-roll is **Pixabay** (Pexels paused new API keys, Nov 2026). Pixabay has few portrait clips: it prefers them,
   else takes the sharpest landscape one, which `object-fit: cover` crops to 9:16. `.env` is read only from the repo root and never on Actions.
-- Workflows: `schedule` + `workflow_dispatch` (+ `repository_dispatch: tick` on `run.yml`, sent every 30 min by the
-  gridbot VM's `me-tick.timer` because GitHub drops most `*/30` crons; see `deploy/vm-tick/`) only. **Never `pull_request_target`.** Every `uses:` is pinned to a
+- Workflows: `schedule` + `workflow_dispatch` only. GitHub drops most `*/30` crons, so the gridbot VM's `me-tick.timer`
+  dispatches `run.yml` with `dry_run=auto` every 30 min (`deploy/vm-tick/`; token = Actions-only PAT, never Contents). **Never `pull_request_target`.** Every `uses:` is pinned to a
   full SHA. Only `run.yml` has `contents: write` (ledger commit).
 - **Roast lines are verbatim from ScrollSmack's `strings.xml`** via `tools/sync_roasts.py` → `copy/roasts.yaml`.
   Never generated, never edited by hand. The renderer reads them from the content item, not from AI copy.
