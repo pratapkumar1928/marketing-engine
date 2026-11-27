@@ -3,13 +3,12 @@ name: run
 # GitHub registers a workflow when a push changes its file: if Actions lists none, touch this file.
 on:
   schedule:
-    - cron: "*/30 * * * *"  # GitHub drops most of these on a quiet repo (~3/day seen), so:
-  repository_dispatch:  # the gridbot VM sends `tick` every 30 min (deploy/vm-tick/); behaves like schedule
-    types: [tick]
+    - cron: "*/30 * * * *"  # GitHub drops most of these (~3/day seen), so the gridbot VM also dispatches
+                            # dry_run=auto every 30 min (deploy/vm-tick/), which behaves like schedule
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "1 = render and log only, 0 = really post"
+        description: "1 = render and log only, 0 = really post, auto = follow vars.DRY_RUN"
         default: "1"
         required: true
       now:
@@ -51,7 +50,7 @@ jobs:
       - name: Run engine
         env:
           ENGINE_SECRETS: ${{ toJSON(secrets) }}
-          DRY_RUN: ${{ inputs.dry_run || vars.DRY_RUN || '1' }}
+          DRY_RUN: ${{ (inputs.dry_run != 'auto' && inputs.dry_run) || vars.DRY_RUN || '1' }}
           HYPERFRAMES_BROWSER_PATH: /usr/bin/google-chrome
           NOW: ${{ inputs.now }}
           LEDGER_PUSH: "1"  # each `publishing` line is pushed before its post; a failed push skips the post
@@ -61,7 +60,7 @@ jobs:
       # Real posts are always recorded: `--now` runs never post, and dry_run=0 dispatches do commit.
       - name: Commit ledger
         if: >-
-          always() && (github.event_name == 'schedule' || github.event_name == 'repository_dispatch' ||
+          always() && (github.event_name == 'schedule' ||
           (inputs.now == '' && !(inputs.dry_run == '1' && vars.DRY_RUN == '0')))
         env:
           BRANCH: ${{ github.ref_name }}

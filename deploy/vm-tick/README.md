@@ -2,7 +2,7 @@
 
 GitHub ran the `*/30` cron only ~3x/day, so the gridbot VM triggers `run.yml` every 30 min.
 
-Install (token = fine-grained PAT: repo `marketing-engine` only, **Contents: read and write**, nothing else):
+Install (token = fine-grained PAT: repo `marketing-engine` only, **Actions: read and write**, nothing else (never Contents: that could push code that runs with the secrets)):
 
     sudo mkdir -p /etc/marketing-engine
     echo "GH_TOKEN=github_pat_..." | sudo tee /etc/marketing-engine/tick.env >/dev/null
